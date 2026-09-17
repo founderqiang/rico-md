@@ -45,6 +45,18 @@ const LEGACY_IMAGE_SHADOW_MAP = {
 
 const DEFAULT_DISPLAY_SETTINGS = {
   fontScale: 1,
+  footerCta: false,
+  footerCtaLead: '既然看到这里了，如果觉得有用，随手点个赞、在看、转发三连吧。',
+  footerCtaLikeLabel: '点赞',
+  footerCtaReadLabel: '在看',
+  footerCtaShareLabel: '转发',
+  spacingMode: 'theme',
+  headingLineHeight: 1.5,
+  bodyLineHeight: 1.8,
+  headingMarginTop: 32,
+  headingMarginBottom: 16,
+  bodyMarginTop: 0,
+  bodyMarginBottom: 16,
   imageStyleMode: 'theme',
   imageMarginTop: 24,
   imageMarginBottom: 32,
@@ -119,6 +131,11 @@ function normalizeHexColor(value, fallback = DEFAULT_DISPLAY_SETTINGS.imageShado
   return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized) ? normalized : fallback;
 }
 
+function normalizeShortText(value, fallback, maxLength) {
+  const text = String(value ?? '').trim();
+  return text ? text.slice(0, maxLength) : fallback;
+}
+
 function normalizeDisplaySettings(settings) {
   if (!settings || typeof settings !== 'object') {
     return { ...DEFAULT_DISPLAY_SETTINGS };
@@ -138,6 +155,18 @@ function normalizeDisplaySettings(settings) {
 
   return {
     fontScale: validScale,
+    footerCta: settings.footerCta === true,
+    footerCtaLead: normalizeShortText(settings.footerCtaLead, DEFAULT_DISPLAY_SETTINGS.footerCtaLead, 80),
+    footerCtaLikeLabel: normalizeShortText(settings.footerCtaLikeLabel, DEFAULT_DISPLAY_SETTINGS.footerCtaLikeLabel, 12),
+    footerCtaReadLabel: normalizeShortText(settings.footerCtaReadLabel, DEFAULT_DISPLAY_SETTINGS.footerCtaReadLabel, 12),
+    footerCtaShareLabel: normalizeShortText(settings.footerCtaShareLabel, DEFAULT_DISPLAY_SETTINGS.footerCtaShareLabel, 12),
+    spacingMode: settings.spacingMode === 'custom' ? 'custom' : 'theme',
+    headingLineHeight: clampNumber(settings.headingLineHeight, 1, 3, DEFAULT_DISPLAY_SETTINGS.headingLineHeight, 2),
+    bodyLineHeight: clampNumber(settings.bodyLineHeight, 1, 3, DEFAULT_DISPLAY_SETTINGS.bodyLineHeight, 2),
+    headingMarginTop: clampNumber(settings.headingMarginTop, 0, 100, DEFAULT_DISPLAY_SETTINGS.headingMarginTop),
+    headingMarginBottom: clampNumber(settings.headingMarginBottom, 0, 100, DEFAULT_DISPLAY_SETTINGS.headingMarginBottom),
+    bodyMarginTop: clampNumber(settings.bodyMarginTop, 0, 80, DEFAULT_DISPLAY_SETTINGS.bodyMarginTop),
+    bodyMarginBottom: clampNumber(settings.bodyMarginBottom, 0, 80, DEFAULT_DISPLAY_SETTINGS.bodyMarginBottom),
     imageStyleMode,
     imageMarginTop: clampNumber(
       settings.imageMarginTop,

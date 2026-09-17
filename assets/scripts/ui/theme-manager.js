@@ -4,9 +4,11 @@
  */
 
 import { STYLES } from '../../styles/themes/index.js';
+import { GZH_DESIGN_THEMES } from '../../styles/themes/gzh-design-skill.js';
 
 /** 主题分类定义 */
 export const THEME_CATEGORIES = {
+  'gzh-design-skill': Object.keys(GZH_DESIGN_THEMES),
   '简约主义': ['wechat-default', 'minimalism','wechat-tech', 'wechat-elegant', 'wechat-deepread','wechat-jonyive'],
   '技术阅读': ['wechat-anthropic', 'wired', 'wechat-medium', 'wechat-apple', 'ai-coder'],
   '传统质感': ['kami-paper', 'wechat-paperpress','latepost-depth', 'wechat-ft', 'wechat-nyt', 'magazine', ],

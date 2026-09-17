@@ -42,6 +42,24 @@ async function processImageProtocol(html, imageStore) {
     }
   }
 
+  // Cover metadata is plain heading text, so it is not part of the normal
+  // Markdown image scan above. Resolve its local image protocol here and let
+  // component themes consume the resolved source through a data attribute.
+  for (const heading of doc.querySelectorAll('h1')) {
+    const match = heading.textContent.match(/(?:^|[｜|]\s*)coverImage\s*=\s*(img:\/\/[^\s｜|]+)/i);
+    if (!match) continue;
+    const imageId = match[1].replace('img://', '');
+    try {
+      const objectURL = await imageStore.getImage(imageId);
+      if (objectURL) {
+        heading.setAttribute('data-cover-image-src', objectURL);
+        heading.setAttribute('data-cover-image-id', imageId);
+      }
+    } catch (_error) {
+      // The title stays usable even when a local image has been removed.
+    }
+  }
+
   return doc.body.innerHTML;
 }
 
@@ -74,10 +92,33 @@ function applyInlineStyles(html, styleConfig, codeTheme, displaySettings) {
   applyCodeHighlighting(doc, { codeTheme, styleConfig });
   applyImageDisplaySettings(doc, displaySettings);
 
+  if (typeof styleConfig?.transform === 'function') {
+    styleConfig.transform(doc, { fontScale, displaySettings });
+  }
+  applySpacingDisplaySettings(doc, displaySettings);
+
   const container = doc.createElement('div');
   container.setAttribute('style', scaledStyle.container);
   container.innerHTML = doc.body.innerHTML;
   return container.outerHTML;
+}
+
+function applySpacingDisplaySettings(doc, displaySettings) {
+  if (displaySettings?.spacingMode !== 'custom') return;
+
+  const headingLineHeight = clampNumber(displaySettings.headingLineHeight, 1, 3, 1.5);
+  const bodyLineHeight = clampNumber(displaySettings.bodyLineHeight, 1, 3, 1.8);
+  const headingMarginTop = clampNumber(displaySettings.headingMarginTop, 0, 100, 32);
+  const headingMarginBottom = clampNumber(displaySettings.headingMarginBottom, 0, 100, 16);
+  const bodyMarginTop = clampNumber(displaySettings.bodyMarginTop, 0, 80, 0);
+  const bodyMarginBottom = clampNumber(displaySettings.bodyMarginBottom, 0, 80, 16);
+
+  doc.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach((heading) => {
+    appendStyleText(heading, `line-height:${headingLineHeight} !important;margin-top:${headingMarginTop}px !important;margin-bottom:${headingMarginBottom}px !important;`);
+  });
+  doc.querySelectorAll('p').forEach((paragraph) => {
+    appendStyleText(paragraph, `line-height:${bodyLineHeight} !important;margin-top:${bodyMarginTop}px !important;margin-bottom:${bodyMarginBottom}px !important;`);
+  });
 }
 
 function applyImageGridThemeStyles(doc, style) {

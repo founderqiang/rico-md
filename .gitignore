@@ -8,6 +8,8 @@ dist/
 *.swp
 *.swo
 *~
-docs/
+docs/*
+!docs/gzh-design-skill.md
 docs/DESIGN
 docs/THEMES
+开发/

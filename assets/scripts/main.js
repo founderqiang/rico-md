@@ -10,6 +10,7 @@ import { createTurndownService, createPasteHandler } from './core/paste-handler.
 import { renderPipeline } from './core/render-pipeline.js';
 import { copyToWechat } from './export/clipboard-exporter.js';
 import { copyToX } from './export/x-clipboard-exporter.js';
+import { exportDocumentArchive, exportAllDocumentsArchive as exportAllDocumentsZip } from './export/document-archive.js';
 import { getCategorizedThemes, getStyleName, isRecommended, getStarredStyles, toggleStarStyle } from './ui/theme-manager.js';
 import {
   getCodeThemeList,
@@ -77,6 +78,33 @@ const imageRadiusModeOptions = [
   { label: '圆形', value: 'circle' }
 ];
 
+const GZH_COVER_TEMPLATES = Object.freeze({
+  'gzh-moyu-green': {
+    name: '摸鱼绿封面模板',
+    fields: 'tag=栏目 | footer=底部署名 | date=2026.09 | author=作者',
+    cursorKey: 'tag=',
+    description: '插入栏目、日期和底部署名字段。'
+  },
+  'gzh-moyu-ticket': {
+    name: '摸鱼票据风封面模板',
+    fields: 'label=AGENT ERA NOTE | stars=5 | subtitle=一句话概括文章的核心观点 | author=你的名字 | authorBio=你的领域 · 你的分享方向 | summary=这里写一段简短总结，介绍文章讨论的问题，以及读者能从中获得什么。 | tags=Skill,Agent,能力商品 | issue=NO. 001 | aside=深度观察 | grade=S | footer=VALID FOR ONE READ | footerRight=ADMIT ONE 🎫',
+    cursorKey: 'summary=',
+    description: '插入完整票据示例，含星级、作者简介、摘要和标签；不需要的字段可删除。'
+  },
+  'gzh-olive-journal': {
+    name: '橄榄手记封面模板',
+    fields: 'label=编辑部观察 | issue=第09期 | aside=插画说明 | footer=署名 | author=作者',
+    cursorKey: 'label=',
+    description: '插入刊头、期号、插画说明和署名字段。'
+  },
+  'gzh-mono-blue-editorial': {
+    name: '墨蓝刊读风封面模板',
+    fields: 'label=刊读 | subtitle=一句话摘要 | issue=NO.09 | footer=署名 | author=作者',
+    cursorKey: 'label=',
+    description: '插入刊头、摘要、期号和底部署名字段。'
+  }
+});
+
 const toast = createToast(() => { toastState.value = toast.getState(); });
 const panelManager = createPanelManager(() => { activePanel.value = panelManager.getActivePanel(); });
 
@@ -110,6 +138,16 @@ const filteredDocuments = computed(() => {
 });
 
 const isImageStyleCustom = computed(() => displaySettings.value.imageStyleMode === 'custom');
+const isGzhTheme = computed(() => typeof currentStyle.value === 'string' && currentStyle.value.startsWith('gzh-'));
+const themeTemplateInfo = computed(() => {
+  const template = GZH_COVER_TEMPLATES[currentStyle.value];
+  if (template) return { ...template, supported: true };
+  return {
+    name: '封面字段模板',
+    description: isGzhTheme.value ? '当前主题没有可配置的封面字段。' : '仅部分 gzh-design-skill 主题支持封面字段。',
+    supported: false
+  };
+});
 
 const tocItems = computed(() => {
   if (!renderedContent.value) return [];
@@ -689,6 +727,74 @@ function selectTheme(key) {
   currentStyle.value = key;
 }
 
+async function handleOliveCoverImageUpload(event) {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  if (!file || currentStyle.value !== 'gzh-olive-journal') return;
+  if (!file.type.startsWith('image/')) {
+    toast.show('请上传图片文件', 'error');
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    toast.show('图片大小不能超过 10MB', 'error');
+    return;
+  }
+
+  try {
+    toast.show('正在保存封面图...', 'success');
+    const compressedBlob = await imageCompressor.compress(file);
+    const imageId = createDocumentId('img');
+    await imageStore.saveImage(imageId, compressedBlob, {
+      name: file.name.replace(/\.[^/.]+$/, '') || '封面图',
+      originalName: file.name,
+      originalSize: file.size,
+      mimeType: compressedBlob.type || file.type
+    });
+
+    const source = markdownInput.value;
+    const heading = source.match(/^#\s+([^\r\n]+)/m);
+    const title = heading?.[1]?.replace(/\s*[｜|]\s*coverImage\s*=\s*[^｜|]+/gi, '').trim() || '主标题';
+    const line = `# ${title} | coverImage=img://${imageId}`;
+    markdownInput.value = heading
+      ? `${source.slice(0, heading.index)}${line}${source.slice(heading.index + heading[0].length)}`
+      : `${line}\n\n${source}`;
+    toast.show('已设置橄榄手记封面图', 'success');
+  } catch (error) {
+    console.error('保存橄榄手记封面图失败:', error);
+    toast.show('封面图保存失败，请重试', 'error');
+  }
+}
+
+function insertThemeCoverTemplate() {
+  const templateInfo = GZH_COVER_TEMPLATES[currentStyle.value];
+  if (!templateInfo) return;
+
+  const source = markdownInput.value;
+  const firstHeading = source.match(/^#\s+([^\r\n]+)/m);
+  const title = firstHeading?.[1]?.split(/[｜|]/)[0].trim() || '主标题';
+  const template = `# ${title} | ${templateInfo.fields}`;
+  const nextContent = firstHeading
+    ? `${source.slice(0, firstHeading.index)}${template}${source.slice(firstHeading.index + firstHeading[0].length)}`
+    : `${template}\n\n${source}`;
+
+  markdownInput.value = nextContent;
+  nextTick(() => {
+    const textarea = getTextarea();
+    if (!textarea) return;
+    // Put the cursor in the first field near the cover title. Focusing a field
+    // near the end of a long one-line template makes browsers scroll the editor
+    // to the bottom, hiding the freshly inserted cover.
+    const cursor = nextContent.indexOf('label=') + 'label='.length;
+    textarea.focus();
+    textarea.selectionStart = cursor;
+    textarea.selectionEnd = cursor;
+    textarea.scrollTop = 0;
+    textarea.scrollLeft = 0;
+    syncEditorSelection({ target: textarea });
+  });
+  toast.show(`已插入${templateInfo.name}，可直接修改各字段`, 'success');
+}
+
 function toggleStar(key) {
   toggleStarStyle(key);
   starredStyles.value = getStarredStyles();
@@ -746,6 +852,66 @@ function updateImageMetric(field, value, min, max) {
 function setImageRadiusMode(value) {
   if (!['px', 'circle'].includes(value)) return;
   updateImageDisplaySettings({ imageRadiusMode: value });
+}
+
+function setFooterCta(value) {
+  if (typeof value !== 'boolean') return;
+  updateDisplaySettings({ footerCta: value });
+}
+
+async function exportCurrentDocumentArchive() {
+  const activeDoc = getActiveDocument();
+  if (!activeDoc) return;
+
+  persistDocumentState();
+  try {
+    const result = await exportDocumentArchive({
+      document: { ...activeDoc, content: markdownInput.value, title: resolveDocumentDisplayTitle(activeDoc) },
+      imageStore
+    });
+    const notice = result.missingIds.length
+      ? `已导出，但有 ${result.missingIds.length} 张本地图片未找到`
+      : '已导出当前文档与图片压缩包';
+    toast.show(notice, result.missingIds.length ? 'error' : 'success');
+  } catch (error) {
+    console.error('导出文档压缩包失败:', error);
+    toast.show(error.message || '导出压缩包失败', 'error');
+  }
+}
+
+async function exportAllDocumentsArchive() {
+  persistDocumentState();
+  try {
+    const snapshot = documents.value.map((doc) => ({
+      ...doc,
+      title: resolveDocumentDisplayTitle(doc),
+      content: doc.id === activeDocumentId.value ? markdownInput.value : doc.content
+    }));
+    const result = await exportAllDocumentsZip({ documents: snapshot, imageStore });
+    const notice = result.missingIds.length
+      ? `已导出，但有 ${result.missingIds.length} 张本地图片未找到`
+      : `已导出全部 ${snapshot.length} 篇文档与图片压缩包`;
+    toast.show(notice, result.missingIds.length ? 'error' : 'success');
+  } catch (error) {
+    console.error('导出全部文档压缩包失败:', error);
+    toast.show(error.message || '导出压缩包失败', 'error');
+  }
+}
+
+function setSpacingMode(value) {
+  if (!['theme', 'custom'].includes(value)) return;
+  updateDisplaySettings({ spacingMode: value });
+}
+
+function updateSpacingMetric(field, value, min, max, precision = 0) {
+  updateDisplaySettings({ [field]: clampNumber(value, min, max, displaySettings.value[field], precision) });
+}
+
+function resetSpacingSettings() {
+  updateDisplaySettings({
+    spacingMode: 'theme', headingLineHeight: 1.5, bodyLineHeight: 1.8,
+    headingMarginTop: 32, headingMarginBottom: 16, bodyMarginTop: 0, bodyMarginBottom: 16
+  });
 }
 
 function updateImageShadowOpacity(value) {
@@ -1198,6 +1364,8 @@ const app = createApp({
       documentSearch,
       filteredDocuments,
       isImageStyleCustom,
+      isGzhTheme,
+      themeTemplateInfo,
       previewMode,
       tocVisible,
       tocItems,
@@ -1237,12 +1405,20 @@ const app = createApp({
       handleToolbarImageUpload,
       exportMarkdown,
       exportHTML,
+      exportCurrentDocumentArchive,
+      exportAllDocumentsArchive,
       selectTheme,
+      handleOliveCoverImageUpload,
+      insertThemeCoverTemplate,
       toggleStar,
       selectCodeTheme,
       setImageStyleMode,
       setFontScale,
       setImageRadiusMode,
+      setFooterCta,
+      setSpacingMode,
+      updateSpacingMetric,
+      resetSpacingSettings,
       updateImageMetric,
       updateImageShadowOpacity,
       updateImageShadowColor,

@@ -106,6 +106,7 @@ export function createMarkdownEngine() {
   });
 
   patchMarkdownScanner(md);
+  registerMarkRule(md);
   registerMathPlugin(md);
 
   md.renderer.rules.fence = (tokens, idx) => {
@@ -116,6 +117,43 @@ export function createMarkdownEngine() {
   };
 
   return md;
+}
+
+/**
+ * `==高亮==` inline syntax → <mark>. Themes style the `mark` selector
+ * (gradient highlight); without this rule the markers leak into the pasted
+ * article as literal "==文字==".
+ */
+function registerMarkRule(md) {
+  md.inline.ruler.before('emphasis', 'mark', (state, silent) => {
+    const EQUALS = 0x3D;
+    const start = state.pos;
+    if (state.src.charCodeAt(start) !== EQUALS || state.src.charCodeAt(start + 1) !== EQUALS) return false;
+    // Opening marker must be followed by non-space content.
+    if (start + 2 >= state.posMax || state.src.charCodeAt(start + 2) === 0x20) return false;
+
+    let end = -1;
+    for (let pos = start + 2; pos + 1 < state.posMax; pos += 1) {
+      if (state.src.charCodeAt(pos) === EQUALS
+        && state.src.charCodeAt(pos + 1) === EQUALS
+        && state.src.charCodeAt(pos - 1) !== 0x20) {
+        end = pos;
+        break;
+      }
+    }
+    if (end === -1) return false;
+    if (silent) return true;
+
+    const previousMax = state.posMax;
+    state.pos = start + 2;
+    state.posMax = end;
+    state.push('mark_open', 'mark', 1);
+    state.md.inline.tokenize(state);
+    state.push('mark_close', 'mark', -1);
+    state.pos = end + 2;
+    state.posMax = previousMax;
+    return true;
+  });
 }
 
 function registerMathPlugin(md) {

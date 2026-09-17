@@ -31,6 +31,7 @@
   <script id="mathjax-script" defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg-full.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue@3.4.15/dist/vue.global.prod.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,8 +62,8 @@
             代码
           </button>
           <button class="header-nav-btn" :class="{ active: activePanel === 'settings' }" @click="togglePanel('settings')">
-            <svg class="lucide lucide-settings-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9"></path><path d="M14 17H5"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg>
-            设置
+            <svg class="lucide lucide-graduation-cap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.92 12 5.5l-9.42 5.42L12 16.5l9.42-5.58Z"></path><path d="M6 13.5v5c3 2 9 2 12 0v-5"></path><path d="M21.42 10.92V16"></path></svg>
+            教学
           </button>
           <a class="header-nav-btn" href="about.html" title="关于">
             <svg class="lucide lucide-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
@@ -142,6 +143,14 @@
             <button class="sidebar-action-btn" @click="exportMarkdown">
               <svg class="lucide lucide-file-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="m12 12 3 3"></path><path d="m12 12-3 3"></path><path d="M12 18v-6"></path></svg>
               导出 Markdown
+            </button>
+            <button class="sidebar-action-btn" @click="exportCurrentDocumentArchive" title="导出当前文档及其插入的本地图片">
+              <svg class="lucide lucide-file-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M12 18v-6"></path><path d="m9 15 3 3 3-3"></path><path d="M8 2v2"></path><path d="M12 2v2"></path><path d="M16 2v2"></path></svg>
+              导出当前文档 + 图片
+            </button>
+            <button class="sidebar-action-btn" @click="exportAllDocumentsArchive" title="导出全部文档及其插入的本地图片">
+              <svg class="lucide lucide-folder-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path><path d="M12 10v5"></path><path d="m9.5 12.5 2.5 2.5 2.5-2.5"></path><path d="M8 7v1"></path><path d="M12 7v1"></path><path d="M16 7v1"></path></svg>
+              导出全部文档 + 图片
             </button>
             <button class="sidebar-action-btn" @click="exportHTML">
               <svg class="lucide lucide-code-xml" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 16 4-4-4-4"></path><path d="m6 8-4 4 4 4"></path><path d="m14.5 4-5 16"></path></svg>
@@ -302,6 +311,20 @@
                     <span class="theme-card-name">{{ theme.name }}</span>
                     <span v-if="theme.recommended" class="theme-card-badge">推荐</span>
                   </div>
+                  <div v-if="cat.category === 'gzh-design-skill'" class="theme-template-action" :class="{ disabled: !themeTemplateInfo.supported }">
+                    <div>
+                      <div class="theme-template-action-title">{{ themeTemplateInfo.name }}</div>
+                      <p>{{ themeTemplateInfo.supported ? `${themeTemplateInfo.description} 保留主标题，替换首行封面字段。` : themeTemplateInfo.description }}</p>
+                    </div>
+                    <button class="theme-template-action-btn" :disabled="!themeTemplateInfo.supported" @click="insertThemeCoverTemplate">
+                      插入模板
+                    </button>
+                  </div>
+                  <div v-if="cat.category === 'gzh-design-skill' && currentStyle === 'gzh-olive-journal'" class="theme-cover-upload">
+                    <span>右侧封面图</span>
+                    <input ref="oliveCoverImageInput" type="file" accept="image/*" @change="handleOliveCoverImageUpload">
+                    <button type="button" @click="($refs.oliveCoverImageInput[0] || $refs.oliveCoverImageInput).click()">上传图片</button>
+                  </div>
                 </template>
               </div>
             </template>
@@ -377,6 +400,83 @@
                     </button>
                   </div>
                   <p class="misc-panel-note">作用于容器、标题和正文等字号，复制到公众号与导出 HTML 会保留当前比例。</p>
+                </div>
+
+                <div v-if="isGzhTheme" class="misc-panel-section">
+                  <div class="code-panel-section-title">文末互动卡</div>
+                  <div class="misc-setting-row">
+                    <div class="misc-setting-label">点赞 · 在看 · 转发</div>
+                    <div class="misc-button-grid misc-button-grid-dual">
+                      <button
+                        class="segmented-option-btn"
+                        :class="{ active: displaySettings.footerCta }"
+                        @click="setFooterCta(true)"
+                      >
+                        <span>显示</span>
+                        <small>文末追加</small>
+                      </button>
+                      <button
+                        class="segmented-option-btn"
+                        :class="{ active: !displaySettings.footerCta }"
+                        @click="setFooterCta(false)"
+                      >
+                        <span>隐藏</span>
+                        <small>仅正文</small>
+                      </button>
+                    </div>
+                  </div>
+                  <div v-if="displaySettings.footerCta" class="misc-control-stack footer-cta-copy-fields">
+                    <label class="footer-cta-lead-field">
+                      <span class="footer-cta-field-heading">引导语</span>
+                      <span class="footer-cta-field-hint">显示在互动按钮上方</span>
+                      <textarea v-model.trim="displaySettings.footerCtaLead" rows="2" maxlength="80" placeholder="写一句邀请读者互动的话"></textarea>
+                      <span class="footer-cta-char-count">{{ (displaySettings.footerCtaLead || '').length }} / 80</span>
+                    </label>
+                    <div class="footer-cta-action-fields">
+                      <span class="footer-cta-field-heading">互动项文字</span>
+                      <div class="misc-text-field-grid">
+                      <label class="misc-text-field">
+                        <span>第一项</span>
+                        <input v-model.trim="displaySettings.footerCtaLikeLabel" type="text" maxlength="12">
+                      </label>
+                      <label class="misc-text-field">
+                        <span>第二项</span>
+                        <input v-model.trim="displaySettings.footerCtaReadLabel" type="text" maxlength="12">
+                      </label>
+                      <label class="misc-text-field">
+                        <span>第三项</span>
+                        <input v-model.trim="displaySettings.footerCtaShareLabel" type="text" maxlength="12">
+                      </label>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="misc-panel-note">gzh-design-skill 主题专属：按当前主题配色在文章末尾追加互动引导卡，随复制与导出一并保留。</p>
+                </div>
+
+                <div class="misc-panel-section">
+                  <div class="code-panel-section-title">间距设置</div>
+                  <div class="misc-button-grid misc-button-grid-dual">
+                    <button class="segmented-option-btn" :class="{ active: displaySettings.spacingMode === 'theme' }" @click="setSpacingMode('theme')"><span>默认</span><small>跟随主题</small></button>
+                    <button class="segmented-option-btn" :class="{ active: displaySettings.spacingMode === 'custom' }" @click="setSpacingMode('custom')"><span>自定义</span><small>覆盖主题</small></button>
+                  </div>
+                  <div class="misc-control-stack" :class="{ disabled: displaySettings.spacingMode !== 'custom' }">
+                    <div class="misc-setting-row" v-for="item in [
+                      { key: 'headingLineHeight', label: '标题行高', min: 1, max: 3, step: 0.05, unit: '', precision: 2 },
+                      { key: 'bodyLineHeight', label: '正文行高', min: 1, max: 3, step: 0.05, unit: '', precision: 2 },
+                      { key: 'headingMarginTop', label: '标题上间距', min: 0, max: 100, step: 1, unit: 'px', precision: 0 },
+                      { key: 'headingMarginBottom', label: '标题下间距', min: 0, max: 100, step: 1, unit: 'px', precision: 0 },
+                      { key: 'bodyMarginTop', label: '正文上间距', min: 0, max: 80, step: 1, unit: 'px', precision: 0 },
+                      { key: 'bodyMarginBottom', label: '正文下间距', min: 0, max: 80, step: 1, unit: 'px', precision: 0 }
+                    ]" :key="item.key">
+                      <div class="misc-range-header"><div class="misc-setting-label">{{ item.label }}</div><span class="misc-range-value">{{ displaySettings[item.key] }}{{ item.unit }}</span></div>
+                      <div class="misc-range-input">
+                        <input type="range" :min="item.min" :max="item.max" :step="item.step" :value="displaySettings[item.key]" :disabled="displaySettings.spacingMode !== 'custom'" @input="updateSpacingMetric(item.key, $event.target.value, item.min, item.max, item.precision)">
+                        <input class="misc-number-input" type="number" :min="item.min" :max="item.max" :step="item.step" :value="displaySettings[item.key]" :disabled="displaySettings.spacingMode !== 'custom'" @input="updateSpacingMetric(item.key, $event.target.value, item.min, item.max, item.precision)">
+                      </div>
+                    </div>
+                  </div>
+                  <button class="misc-reset-btn" @click="resetSpacingSettings">恢复主题默认</button>
+                  <p class="misc-panel-note">自定义会同时作用于预览、复制到公众号和导出 HTML。</p>
                 </div>
 
                 <div class="misc-panel-section">
@@ -621,12 +721,43 @@
       <div v-if="activePanel === 'settings'" class="settings-overlay">
         <div class="settings-panel">
           <div class="settings-panel-header">
-            <h3 class="settings-panel-title">设置</h3>
+            <h3 class="settings-panel-title">操作教学</h3>
             <button class="settings-panel-close" @click="togglePanel('settings')">
               <svg class="lucide lucide-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
             </button>
           </div>
           <div class="settings-panel-body">
+            <p class="tutorial-lede">从 Markdown 写作到公众号排版，都在同一页完成；确认预览后，点击顶部的“复制到公众号”。</p>
+            <div class="panel-settings-group tutorial-section">
+              <h4 class="tutorial-section-title">开始使用</h4>
+              <ol class="tutorial-steps">
+                <li>在“主题”中选择文章风格。</li>
+                <li>在编辑区输入 Markdown，预览会即时更新。</li>
+                <li>用预览工具栏切换手机、平板或桌面宽度。</li>
+                <li>确认效果后复制到公众号编辑器。</li>
+              </ol>
+            </div>
+            <div class="panel-settings-group tutorial-section">
+              <h4 class="tutorial-section-title">主题封面字段</h4>
+              <p class="tutorial-section-desc">摸鱼绿、摸鱼票据、橄榄手记、墨蓝刊读风共用这套写法；只填想显示的字段。</p>
+              <code class="tutorial-code"><span># 主标题</span><span>| label=刊头</span><span>| subtitle=摘要</span><span>| summary=短总结</span><span>| issue=NO. 001</span><span>| footer=署名</span></code>
+              <dl class="tutorial-field-list">
+                <div><dt>label</dt><dd>顶部刊头</dd></div>
+                <div><dt>subtitle</dt><dd>标题摘要</dd></div>
+                <div><dt>summary</dt><dd>票据风短总结</dd></div>
+                <div><dt>issue</dt><dd>期号或日期</dd></div>
+                <div><dt>footer / author</dt><dd>底部署名</dd></div>
+              </dl>
+              <p class="tutorial-tip">选中 gzh-design-skill 中支持封面的主题后，可直接点该分组底部的“插入模板”；会保留你的主标题，并填入对应字段。</p>
+              <p class="tutorial-tip">票据风模板包含完整示例：<code>stars=5</code> 为刊头星级（1–5），<code>authorBio=你的简介</code> 为作者下方介绍，<code>tags=Skill,Agent</code> 为摘要下方标签，<code>aside=深度观察 | grade=S</code> 为右侧票根文字。删除字段即可隐藏对应区域。</p>
+              <p class="tutorial-tip">橄榄手记可在同一位置“上传图片”替换右侧封面图，插画说明由 <code>aside</code> 控制。</p>
+            </div>
+            <div class="panel-settings-group tutorial-section">
+              <h4 class="tutorial-section-title">封面下方的横向目录</h4>
+              <p class="tutorial-section-desc">摸鱼绿有至少两个二级标题时，会自动生成可横向滑动的目录。</p>
+              <code class="tutorial-code tutorial-code-short">## 章节标题 <span>| 卡片要点说明</span></code>
+              <p class="tutorial-tip">竖线前是章节标题，后半段会显示在目录卡片的第二行。</p>
+            </div>
             <div class="panel-settings-group">
               <label class="settings-label">
                 <span>同步滚动</span>

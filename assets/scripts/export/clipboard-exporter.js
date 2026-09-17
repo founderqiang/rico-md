@@ -354,13 +354,80 @@ function convertCodeBlocks(doc, styleConfig, codeTheme) {
     frame.appendChild(scrollArea);
     wrapper.appendChild(frame);
     block.parentNode.replaceChild(wrapper, block);
+    removeAdjacentWhitespaceNodes(wrapper);
+  });
+}
+
+/**
+ * markdown-it leaves newline-only text nodes around block output. Browsers
+ * collapse them visually, but the WeChat editor can promote them to editable
+ * empty paragraphs when rich HTML is pasted.
+ */
+function removeAdjacentWhitespaceNodes(node) {
+  [node.previousSibling, node.nextSibling].forEach((sibling) => {
+    if (sibling?.nodeType === Node.TEXT_NODE && !sibling.textContent.trim()) {
+      sibling.remove();
+    }
+  });
+}
+
+const WHITESPACE_CONTEXT_BLOCK_TAGS = new Set([
+  'address', 'article', 'aside', 'blockquote', 'details', 'div', 'dl', 'dd', 'dt',
+  'figcaption', 'figure', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header',
+  'hr', 'img', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'summary',
+  'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'ul'
+]);
+
+function isBlockElementForWhitespace(node) {
+  return Boolean(node)
+    && node.nodeType === Node.ELEMENT_NODE
+    && WHITESPACE_CONTEXT_BLOCK_TAGS.has(node.tagName.toLowerCase());
+}
+
+function nearestMeaningfulSibling(node, direction) {
+  let sibling = direction === 'prev' ? node.previousSibling : node.nextSibling;
+  while (sibling?.nodeType === Node.TEXT_NODE && !sibling.textContent.trim()) {
+    sibling = direction === 'prev' ? sibling.previousSibling : sibling.nextSibling;
+  }
+  return sibling;
+}
+
+/**
+ * Same paste problem as `removeAdjacentWhitespaceNodes`, but document-wide:
+ * the WeChat editor turns whitespace-only text nodes sitting between block
+ * elements (e.g. the newlines markdown-it emits between headings, lists and
+ * component sections) into empty paragraphs, adding stray blank lines around
+ * titles and lists. Whitespace between two inline nodes is a visible space,
+ * and `pre`/`code` content must keep its formatting, so those are left alone.
+ */
+function removeInterstitialWhitespace(doc) {
+  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      // `closest` lives on Element, not on Text nodes.
+      if (node.parentElement?.closest('pre, code')) return NodeFilter.FILTER_REJECT;
+      return node.textContent.trim() ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+    }
+  });
+
+  const targets = [];
+  while (walker.nextNode()) targets.push(walker.currentNode);
+
+  targets.forEach((node) => {
+    if (!node.parentNode) return;
+    const prev = nearestMeaningfulSibling(node, 'prev');
+    const next = nearestMeaningfulSibling(node, 'next');
+    if (isBlockElementForWhitespace(prev) || isBlockElementForWhitespace(next)) {
+      node.remove();
+    } else if (!prev && !next && isBlockElementForWhitespace(node.parentNode)) {
+      node.remove();
+    }
   });
 }
 
 function resolveCodeBlockExportStyles(styleConfig, codeTheme) {
   if (codeTheme) {
     return {
-      wrapper: 'margin: 24px 0 !important;',
+      wrapper: 'display: block !important; margin: 0 !important; padding: 12px 0 !important;',
       frame: `padding: 16px !important; background: ${codeTheme.bg} !important; color: ${codeTheme.textColor} !important; border: 1px solid ${codeTheme.borderColor} !important; border-radius: 10px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important; -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;`,
       scrollArea: 'display: block !important; overflow-x: auto !important; overflow-y: hidden !important; padding: 0 0 12px 0 !important; -webkit-overflow-scrolling: touch !important;',
       content: 'display: inline-block !important; min-width: max-content !important;',
@@ -380,7 +447,7 @@ function resolveCodeBlockExportStyles(styleConfig, codeTheme) {
   const lineHeightFallback = extractStyleValue(cleanCodeStyle, 'line-height') ? '' : 'line-height: 1.7 !important;';
 
   return {
-    wrapper: 'margin: 24px 0 !important;',
+    wrapper: 'display: block !important; margin: 0 !important; padding: 12px 0 !important;',
     frame: `padding: 16px !important; ${preStyle}`,
     scrollArea: 'display: block !important; overflow-x: auto !important; overflow-y: hidden !important; padding: 0 0 12px 0 !important; -webkit-overflow-scrolling: touch !important;',
     content: 'display: inline-block !important; min-width: max-content !important;',
@@ -718,6 +785,136 @@ function wrapSectionIfNeeded(doc, styleConfig) {
   doc.body.appendChild(section);
 }
 
+/**
+ * gzh-design-skill themes only: mirror the upstream article output that is
+ * field-proven to paste cleanly into the WeChat editor.
+ *  1. Append the hidden `<mp-style-type data-value="3">` compatibility mark
+ *     as the last element — it makes the editor keep the pasted fragment as
+ *     one style module instead of re-normalizing it into paragraphs (which
+ *     inserts stray empty lines around the section components).
+ *  2. Strip `id` attributes — a platform red line in the upstream skill; the
+ *     editor filters them anyway and may restructure marked elements.
+ */
+function applyWechatStyleModuleMark(doc, styleConfig) {
+  if (!styleConfig?.wechatStyleModule) return;
+
+  doc.querySelectorAll('[id]').forEach((element) => {
+    element.removeAttribute('id');
+  });
+
+  const mark = doc.createElement('p');
+  mark.setAttribute('style', 'display:none;');
+  const styleType = doc.createElement('mp-style-type');
+  styleType.setAttribute('data-value', '3');
+  mark.appendChild(styleType);
+  doc.body.appendChild(mark);
+}
+
+/**
+ * gzh-design-skill themes only: wrap every content-bearing text node in
+ * `<span leaf="">`. This is the upstream skill's #1 WeChat paste rule — the
+ * editor recognizes `leaf`-marked spans as style-module content and leaves
+ * them inline; bare text nodes next to styled spans get re-normalized into
+ * their own paragraphs, splitting lines like 「…而是在放大能力差距」「。」
+ * apart and adding stray blank lines around components.
+ * Whitespace-only nodes are left alone (they carry inline spacing), and
+ * pre/code subtrees keep their raw text.
+ */
+function wrapTextNodesWithLeaf(doc) {
+  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!node.textContent.trim()) return NodeFilter.FILTER_REJECT;
+      const parent = node.parentElement;
+      if (!parent) return NodeFilter.FILTER_REJECT;
+      if (parent.closest('pre, code')) return NodeFilter.FILTER_REJECT;
+      if (parent.closest('span[leaf]')) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+
+  const targets = [];
+  while (walker.nextNode()) targets.push(walker.currentNode);
+
+  targets.forEach((node) => {
+    const leafSpan = doc.createElement('span');
+    leafSpan.setAttribute('leaf', '');
+    node.parentNode.insertBefore(leafSpan, node);
+    leafSpan.appendChild(node);
+  });
+}
+
+/**
+ * gzh-design-skill themes only: flatten the export to the root structure the
+ * upstream skill ships — a single `<section>` root. WeChat strips `<div>`
+ * (a platform red line upstream); when the container div is unwrapped its
+ * children get promoted and re-normalized block by block, which is where
+ * stray empty lines around components come from.
+ */
+function flattenStyleModuleRoot(doc) {
+  const wrap = doc.body.firstElementChild;
+  let container = wrap;
+  if (wrap && wrap.tagName === 'SECTION' && wrap.children.length === 1
+    && wrap.firstElementChild?.tagName === 'DIV') {
+    container = wrap.firstElementChild;
+    doc.body.replaceChild(container, wrap);
+  }
+
+  if (container?.tagName === 'DIV') {
+    const section = doc.createElement('section');
+    section.setAttribute('style', container.getAttribute('style') || '');
+    while (container.firstChild) section.appendChild(container.firstChild);
+    container.replaceWith(section);
+  }
+
+  return doc.body.firstElementChild;
+}
+
+function readLength(value) {
+  const number = parseFloat(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+/**
+ * gzh-design-skill themes only: remove the export's reliance on CSS margin
+ * collapsing. The editor wraps each top-level block in its own container, so
+ * margins that the preview collapses (adjacent margin-top + margin-bottom,
+ * and a wrapper's margin-bottom with its last child's) stack additively in
+ * the published article — every component then sits one blank line lower than
+ * the preview. Preview rendering is untouched: each adjustment keeps the
+ * collapsed (preview) value as the effective gap.
+ */
+function normalizeTopLevelMargins(root) {
+  if (!root) return;
+  const blocks = Array.from(root.children).filter((child) => child.nodeType === Node.ELEMENT_NODE);
+
+  blocks.forEach((block, index) => {
+    const previous = blocks[index - 1];
+    if (previous) {
+      const previousBottom = readLength(previous.style.marginBottom);
+      const top = readLength(block.style.marginTop);
+      if (top > 0 && previousBottom > 0) {
+        block.style.marginTop = `${Math.max(top - previousBottom, 0)}px`;
+      }
+    }
+
+    // Fold a trailing child's margin-bottom into the wrapper. Skipped when
+    // padding/border on the wrapper already prevents collapsing in preview
+    // (folding there would change the real spacing) and inside flex layouts.
+    const last = block.lastElementChild;
+    if (!last || block.style.display === 'flex') return;
+    if (readLength(block.style.paddingBottom) > 0 || block.style.borderBottom) return;
+
+    const wrapperBottom = readLength(block.style.marginBottom);
+    const childBottom = readLength(last.style.marginBottom);
+    if (childBottom > 0) {
+      last.style.marginBottom = '0px';
+      if (childBottom > wrapperBottom) {
+        block.style.marginBottom = `${childBottom}px`;
+      }
+    }
+  });
+}
+
 function buildClipboardPlainText(doc) {
   const clone = doc.body.cloneNode(true);
 
@@ -798,9 +995,20 @@ export async function copyToWechat({ renderedHTML, styleConfig, imageStore, show
     convertOrderedListsToWechatParagraphs(doc, effectiveStyleConfig);
     normalizeListTypographyForWechat(doc, effectiveStyleConfig);
     inlineContainerTypographyForWechat(doc, effectiveStyleConfig);
-    normalizeBlockquotes(doc);
-    wrapSectionIfNeeded(doc, effectiveStyleConfig);
+    if (!effectiveStyleConfig?.preserveQuoteColors) normalizeBlockquotes(doc);
+    let styleModuleRoot = null;
+    if (effectiveStyleConfig?.wechatStyleModule) {
+      styleModuleRoot = flattenStyleModuleRoot(doc);
+    } else {
+      wrapSectionIfNeeded(doc, effectiveStyleConfig);
+    }
+    applyWechatStyleModuleMark(doc, effectiveStyleConfig);
 
+    removeInterstitialWhitespace(doc);
+    if (effectiveStyleConfig?.wechatStyleModule) {
+      wrapTextNodesWithLeaf(doc);
+      normalizeTopLevelMargins(styleModuleRoot);
+    }
     const text = buildClipboardPlainText(doc);
     stripFormulaExportMetadata(doc.body);
     const html = doc.body.innerHTML;

@@ -25,12 +25,14 @@ import { theme as lemonde } from './lemonde.js';
 import { theme as minimalism } from './minimalism.js';
 import { theme as wechatPaperpress } from './wechat-paperpress.js';
 import { theme as kamiPaper } from './kami-paper.js';
+import { GZH_DESIGN_THEMES } from './gzh-design-skill.js';
 
 /**
  * 所有主题样式配置
  * 格式为内联 CSS 字符串（微信兼容性要求）
  */
 export const STYLES = {
+  ...GZH_DESIGN_THEMES,
   'wechat-default': wechatDefault,
   'latepost-depth': latepostDepth,
   'wechat-ft': wechatFt,
