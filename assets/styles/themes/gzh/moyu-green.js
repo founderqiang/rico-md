@@ -11,7 +11,7 @@ const GREEN = '#059669';
 
 function pill(doc, scale, label, color, bg) {
   return sp(doc,
-    `display:inline-block;font-size:${px(13, scale)};font-weight:700;color:${color};background:${bg};padding:3px 10px;border-radius:999px;`,
+    `display:inline-block;font-size:${px(13, scale)};font-weight:700;color:${color};background:${bg};padding:3px 10px;border-radius:999px;vertical-align:middle;`,
     sp(doc, `display:inline-block;width:6px;height:6px;background:${color};border-radius:50%;margin-right:5px;vertical-align:middle;`, leaf(doc)),
     doc.createTextNode(label));
 }
@@ -52,7 +52,7 @@ function chapter(h2, { index, isLast, number, tag, scale }) {
   const doc = h2.ownerDocument;
   h2.setAttribute('style', `margin:0 0 1px;font-size:${px(17, scale)};font-weight:900;color:#111827;letter-spacing:0.3px;line-height:1.5;font-family:${SANS};`);
 
-  return sec(doc, `margin:${index === 0 ? '16px' : '48px'} 0 24px;padding:0 20px;`,
+  return sec(doc, `margin:${index === 0 ? '32px' : '48px'} 0 24px;padding:0 20px;`,
     sec(doc, 'display:flex;align-items:center;gap:16px;margin-bottom:24px;',
       sec(doc, 'text-align:center;flex-shrink:0;',
         p(doc, `margin:0;font-size:${px(28, scale)};font-weight:900;color:#059669;line-height:1;letter-spacing:-2px;`, doc.createTextNode(isLast ? '///' : number)),
@@ -111,20 +111,23 @@ function blockQuote(quote, { scale }) {
 function unorderedList(ul, { scale }) {
   const doc = ul.ownerDocument;
   return Array.from(ul.children).filter((child) => child.tagName === 'LI').map((item) => {
-    const { label, description } = splitListItem(item);
+    const { label, description, descriptionNodes } = splitListItem(item);
     const block = sec(doc, 'margin:0 20px 14px;');
+    const desc = p(doc, `font-size:${px(13, scale)};color:#4B5563;margin:0;line-height:1.7;text-align:justify;`);
     if (label) {
-      block.appendChild(p(doc, 'margin:0 0 6px;', pill(doc, scale, label, '#059669', 'rgba(5,150,105,0.08)')));
+      desc.appendChild(pill(doc, scale, label, '#059669', 'rgba(5,150,105,0.08)'));
+      desc.appendChild(doc.createTextNode(' '));
     }
-    if (description) {
-      const desc = p(doc, `font-size:${px(13, scale)};color:#4B5563;margin:0;line-height:1.7;text-align:justify;`);
+    if (descriptionNodes) {
+      descriptionNodes.forEach((node) => desc.appendChild(node));
+    } else if (description) {
       desc.appendChild(doc.createTextNode(description));
-      block.appendChild(desc);
     } else if (!label) {
-      const desc = p(doc, `font-size:${px(13, scale)};color:#4B5563;margin:0;line-height:1.7;text-align:justify;`);
       moveChildren(item, desc);
-      block.appendChild(desc);
+    } else {
+      return block;
     }
+    block.appendChild(desc);
     return block;
   });
 }
@@ -151,12 +154,14 @@ function divider(rule) {
 }
 
 function toc(items, { scale, doc }) {
-  const track = sec(doc, 'overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;padding-bottom:8px;');
+  // Flex track (instead of inline-block cards) keeps every card the same
+  // height regardless of how many lines its title wraps to.
+  const track = sec(doc, 'display:flex;align-items:stretch;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;');
   items.forEach((item, index) => {
     const active = index === 0;
     const cardStyle = active
-      ? 'display:inline-block;white-space:normal;vertical-align:top;width:110px;background:linear-gradient(135deg,#059669,#10B981);border-radius:12px;padding:12px;margin-right:8px;'
-      : 'display:inline-block;white-space:normal;vertical-align:top;width:110px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-right:8px;box-shadow:0 2px 6px rgba(0,0,0,0.04);';
+      ? 'flex:0 0 110px;display:flex;flex-direction:column;background:linear-gradient(135deg,#059669,#10B981);border-radius:12px;padding:12px;'
+      : 'flex:0 0 110px;display:flex;flex-direction:column;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);';
     track.appendChild(sec(doc, cardStyle,
       p(doc, `font-size:${px(9, scale)};font-weight:700;color:${active ? 'rgba(255,255,255,0.7)' : '#9CA3AF'};letter-spacing:1px;margin:0 0 5px;`,
         doc.createTextNode(`PART ${index === items.length - 1 ? '///' : item.number}`)),
@@ -204,7 +209,7 @@ export const moyuGreenTheme = {
     p: 'margin:0 0 16px;padding:0 20px;font-size:14px;line-height:1.9;text-align:justify;color:#374151 !important;',
     strong: `font-weight:700;color:${GREEN} !important;`,
     em: 'font-style:italic;color:#4B5563 !important;',
-    a: `color:${GREEN} !important;font-weight:600;text-decoration:underline;overflow-wrap:anywhere;`,
+    a: `color:${GREEN} !important;font-weight:600;text-decoration:underline;overflow-wrap:break-word;`,
     u: 'text-decoration:none;border-bottom:2px solid #A7F3D0;font-weight:600;',
     mark: 'background:linear-gradient(180deg,transparent 60%,#FDE68A 60%);color:#111827;font-weight:600;padding:0 2px;',
     s: 'color:#9CA3AF;text-decoration:line-through;',

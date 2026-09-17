@@ -84,11 +84,16 @@ function applyInlineStyles(html, styleConfig, codeTheme, displaySettings) {
     });
   });
 
+  // Side gutter shared by tables and code blocks so their left/right edges
+  // line up with the theme's body text (themes whose paragraphs carry side
+  // padding, e.g. the gzh pack; falls back to 0 for full-width themes).
+  const textInset = extractBoxSideValue(scaledStyle.p || '', 'padding', 'left') || '0';
+
   applyImageGridThemeStyles(doc, scaledStyle);
-  normalizeTableOverflow(doc);
+  normalizeTableOverflow(doc, textInset);
   applyInlineCodeStyles(doc, scaledStyle);
   applyStandalonePreStyles(doc, scaledStyle);
-  applyCodeBlockStyles(doc, scaledStyle, codeTheme, fontScale);
+  applyCodeBlockStyles(doc, scaledStyle, codeTheme, fontScale, textInset);
   applyCodeHighlighting(doc, { codeTheme, styleConfig });
   applyImageDisplaySettings(doc, displaySettings);
 
@@ -199,7 +204,7 @@ function extractBoxSideValue(styleText, property, side) {
   if (parts.length === 0) return null;
   if (parts.length === 1) return parts[0];
   if (parts.length === 2) return side === 'top' || side === 'bottom' ? parts[0] : parts[1];
-  if (parts.length === 3) return side === 'bottom' ? parts[2] : parts[0];
+  if (parts.length === 3) return side === 'top' ? parts[0] : side === 'bottom' ? parts[2] : parts[1];
   return side === 'top' ? parts[0] : side === 'right' ? parts[1] : side === 'bottom' ? parts[2] : parts[3];
 }
 
@@ -352,13 +357,13 @@ function mergeStyleText(...parts) {
     .trim();
 }
 
-function normalizeTableOverflow(doc) {
+function normalizeTableOverflow(doc, textInset = '0') {
   const tables = Array.from(doc.querySelectorAll('table'));
 
   tables.forEach((table) => {
     if (table.closest('.md-table-scroll')) return;
 
-    appendStyleText(table, 'max-width: 100%; width: max-content; min-width: 100%; table-layout: auto;margin:16px 2px;');
+    appendStyleText(table, 'max-width: 100%; width: max-content; min-width: 100%; table-layout: auto;margin:16px 0;');
 
     const parent = table.parentNode;
     if (!parent) return;
@@ -367,7 +372,7 @@ function normalizeTableOverflow(doc) {
     wrapper.className = 'md-table-scroll';
     wrapper.setAttribute(
       'style',
-      'max-width: 100%; width: 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;margin-bottom:24px;'
+      `max-width: 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;margin:0 ${textInset} 24px;`
     );
 
     parent.insertBefore(wrapper, table);
@@ -392,13 +397,13 @@ function applyStandalonePreStyles(doc, style) {
   });
 }
 
-function applyCodeBlockStyles(doc, style, codeTheme, fontScale = 1) {
+function applyCodeBlockStyles(doc, style, codeTheme, fontScale = 1, textInset = '0') {
   const blocks = doc.querySelectorAll('[data-code-block="true"]');
   if (blocks.length === 0) return;
 
   const resolvedStyles = codeTheme
-    ? buildCodeThemeStyles(codeTheme, fontScale)
-    : buildThemeCodeBlockStyles(style);
+    ? buildCodeThemeStyles(codeTheme, fontScale, textInset)
+    : buildThemeCodeBlockStyles(style, textInset);
 
   blocks.forEach((block) => {
     const pre = block.querySelector('.md-code-block-pre');
@@ -416,16 +421,16 @@ function applyCodeBlockStyles(doc, style, codeTheme, fontScale = 1) {
   });
 }
 
-function buildCodeThemeStyles(codeTheme, fontScale = 1) {
+function buildCodeThemeStyles(codeTheme, fontScale = 1, textInset = '0') {
   const scaledFontSize = `${Number((14 * fontScale).toFixed(2)).toString()}px`;
   return {
-    block: 'margin: 24px 0;',
+    block: `margin: 24px ${textInset};`,
     pre: `margin: 0; padding: 16px; overflow-x: auto; background: ${codeTheme.bg}; border: 1px solid ${codeTheme.borderColor}; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.12);`,
     code: `display: block; margin: 0; background: transparent; color: ${codeTheme.textColor}; font-family: 'SF Mono', Monaco, 'Cascadia Code', Consolas, monospace; font-size: ${scaledFontSize}; line-height: 1.7; white-space: pre; tab-size: 2;`
   };
 }
 
-function buildThemeCodeBlockStyles(style) {
+function buildThemeCodeBlockStyles(style, textInset = '0') {
   const preStyle = style.pre || '';
   const cleanCodeStyle = sanitizeThemeCodeStyle(style.code || '');
   const preTextColor = extractStyleValue(preStyle, 'color');
@@ -438,7 +443,7 @@ function buildThemeCodeBlockStyles(style) {
   const lineHeightFallback = extractStyleValue(cleanCodeStyle, 'line-height') ? '' : 'line-height: 1.7;';
 
   return {
-    block: 'margin: 24px 0;',
+    block: `margin: 24px ${textInset};`,
     pre: `margin: 0; padding: 16px; overflow-x: auto; ${preStyle}`,
     code: `display: block; margin: 0; background: transparent; white-space: pre; tab-size: 2; ${fontFamilyFallback} ${fontSizeFallback} ${lineHeightFallback} ${textColorFallback} ${cleanCodeStyle}`
   };

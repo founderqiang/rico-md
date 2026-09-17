@@ -67,7 +67,7 @@ function chapter(h2, { index, number, tag, scale }) {
   const row = sec(doc, `display:flex;align-items:baseline;border-bottom:2px solid ${INK};padding-bottom:10px;`,
     sp(doc, `font-family:Georgia,serif;font-size:${px(22, scale)};font-weight:700;color:${BLUE};margin-right:10px;`, doc.createTextNode(number)),
     h2);
-  return sec(doc, `margin:${index === 0 ? '8px' : '44px'} 0 24px 0;padding:0 22px;`,
+  return sec(doc, `margin:${index === 0 ? '32px' : '44px'} 0 24px 0;padding:0 22px;`,
     tag ? p(doc, `margin:0 0 6px 0;font-family:${LABEL};font-size:${px(11, scale)};color:#6B6B6B;letter-spacing:1.5px;`, doc.createTextNode(tag)) : null,
     row);
 }
@@ -150,7 +150,7 @@ export const monoBlueEditorialTheme = {
     p: `margin:0 0 22px;padding:0 22px;font-size:15px;line-height:1.95;color:${INK} !important;text-align:justify;`,
     strong: `font-weight:700;color:${INK} !important;`,
     em: 'font-style:italic;color:#4A4A4A !important;',
-    a: `color:${BLUE} !important;font-weight:600;text-decoration:underline;overflow-wrap:anywhere;`,
+    a: `color:${BLUE} !important;font-weight:600;text-decoration:underline;overflow-wrap:break-word;`,
     u: `text-decoration:none;border-bottom:2px solid ${BLUE};font-weight:600;color:${INK};`,
     mark: `background-color:#F0F0F0;color:${BLUE};padding:1px 6px;font-weight:600;`,
     s: 'color:#8A8A8A;text-decoration:line-through;',

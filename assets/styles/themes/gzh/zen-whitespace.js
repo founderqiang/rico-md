@@ -139,7 +139,7 @@ export const zenWhitespaceTheme = {
     p: 'margin:0 0 26px;padding:0 16px;font-size:15px;line-height:1.9;text-align:justify;color:#525252 !important;',
     strong: `font-weight:600;color:${GREEN} !important;`,
     em: 'font-style:italic;color:#737373 !important;',
-    a: `color:${GREEN} !important;text-decoration:underline;overflow-wrap:anywhere;`,
+    a: `color:${GREEN} !important;text-decoration:underline;overflow-wrap:break-word;`,
     u: 'text-decoration:none;border-bottom:1.5px solid #B5C8BC;font-weight:500;',
     mark: 'background-color:#EEF3F0;color:#3D5046;padding:2px 6px;border-radius:2px;font-weight:600;',
     s: 'color:#A3A3A3;text-decoration:line-through;',

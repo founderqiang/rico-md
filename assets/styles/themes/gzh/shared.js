@@ -114,8 +114,12 @@ export function inlineContentOf(node) {
 
 /**
  * Split list-item text into a short label and an optional description at the
- * first colon. Returns { label, description } — description empty when the
- * item is label-only, label empty when the item is too long to pill-ify.
+ * first colon. Returns { label, description, descriptionNodes } — description
+ * empty when the item is label-only, label empty when the item is too long
+ * to pill-ify. When the label is plain leading text, descriptionNodes keeps
+ * the item's inline elements (links, strong, code …) intact instead of
+ * flattening them to text; otherwise it is null and callers fall back to the
+ * plain-text description.
  */
 export function splitListItem(item) {
   const clone = item.cloneNode(true);
@@ -126,9 +130,26 @@ export function splitListItem(item) {
   });
   const text = (clone.textContent || '').replace(/\s+/g, ' ').trim();
   const colon = text.match(/^(.{1,14}?)\s*[：:]\s*(.+)$/);
-  if (colon) return { label: colon[1], description: colon[2], nodes: null };
-  if (text.length <= 12) return { label: text, description: '', nodes: null };
-  return { label: '', description: text, nodes: null };
+  if (colon) {
+    let descriptionNodes = null;
+    // Strip the `label：` prefix from the live clone when it lives entirely
+    // in a leading text node, so the rest of the item can be moved as nodes.
+    const first = clone.firstChild;
+    if (first && first.nodeType === 3) {
+      const stripped = first.nodeValue.replace(/^\s*[^：:]{1,14}?\s*[：:]\s*/, '');
+      if (first.nodeValue !== stripped && !/^[：:]/.test(stripped)) {
+        first.nodeValue = stripped;
+        descriptionNodes = Array.from(clone.childNodes).filter((node) => {
+          if (node.nodeType !== 3) return true;
+          return Boolean((node.nodeValue || '').trim());
+        });
+        if (descriptionNodes.length === 0) descriptionNodes = null;
+      }
+    }
+    return { label: colon[1], description: colon[2], descriptionNodes };
+  }
+  if (text.length <= 12) return { label: text, description: '', descriptionNodes: null };
+  return { label: '', description: text, descriptionNodes: null };
 }
 
 /** All direct children of body matching a predicate. */

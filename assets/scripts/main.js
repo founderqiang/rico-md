@@ -1241,7 +1241,10 @@ function initResizeHandles() {
       const clampedWidth = Math.max(200, Math.min(mainWidth * 0.6, newWidth));
       editorWidth.value = (clampedWidth / mainWidth * 100).toFixed(2);
     } else if (resizeState.type === 'preview-right' && rightPanel) {
-      const newWidth = resizeState.startRightWidth + delta;
+      // The handle sits on the right panel's LEFT edge, so dragging right
+      // (positive delta) must shrink it — the opposite sign of the
+      // editor-preview handle, which rides its panel's right edge.
+      const newWidth = resizeState.startRightWidth - delta;
       rightPanelWidth.value = Math.max(280, Math.min(500, newWidth));
     }
   });

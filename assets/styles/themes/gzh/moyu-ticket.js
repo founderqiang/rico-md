@@ -77,7 +77,7 @@ function chapter(h2, { index, number, tag, scale }) {
   const doc = h2.ownerDocument;
   h2.setAttribute('style', `font-size:${px(18, scale)};font-weight:800;color:${INK};letter-spacing:1px;margin:0;line-height:1.4;font-family:${SANS};`);
 
-  return sec(doc, 'margin-bottom:32px;padding:0 20px;',
+  return sec(doc, `margin-top:${index === 0 ? 32 : 40}px;margin-bottom:32px;padding:0 20px;`,
     sec(doc, `display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid ${INK};`,
       sec(doc, `background:${GREEN};color:#fff;font-size:${px(12, scale)};font-weight:800;padding:6px 12px;letter-spacing:2px;`, doc.createTextNode(number)),
       h2,
@@ -126,13 +126,23 @@ function featureCard(doc, scale, markerColumn, content) {
   );
 }
 
+function appendListContent(doc, item, content) {
+  const { label, description, descriptionNodes } = splitListItem(item);
+  if (label) content.appendChild(sp(doc, `font-weight:600;color:${INK};`, doc.createTextNode(label)));
+  if (descriptionNodes) {
+    content.appendChild(doc.createTextNode('：'));
+    descriptionNodes.forEach((node) => content.appendChild(node));
+  } else if (description) {
+    content.appendChild(doc.createTextNode(`：${description}`));
+  } else {
+    moveChildren(item, content);
+  }
+}
+
 function unorderedList(ul, { scale, doc }) {
   return Array.from(ul.children).filter((child) => child.tagName === 'LI').map((item) => {
-    const { label, description } = splitListItem(item);
     const content = sec(doc, '');
-    if (label) content.appendChild(sp(doc, `font-weight:600;color:${INK};`, doc.createTextNode(label)));
-    if (description) content.appendChild(doc.createTextNode(`：${description}`));
-    else moveChildren(item, content);
+    appendListContent(doc, item, content);
     const marker = sec(doc, `width:36px;background:${GREEN};display:flex;align-items:center;justify-content:center;`,
       sp(doc, `width:8px;height:8px;background:#fff;`, leaf(doc)));
     return featureCard(doc, scale, marker, content);
@@ -141,11 +151,8 @@ function unorderedList(ul, { scale, doc }) {
 
 function orderedList(ol, { scale, doc }) {
   return Array.from(ol.children).filter((child) => child.tagName === 'LI').map((item, index) => {
-    const { label, description } = splitListItem(item);
     const content = sec(doc, '');
-    if (label) content.appendChild(sp(doc, `font-weight:600;color:${INK};`, doc.createTextNode(label)));
-    if (description) content.appendChild(doc.createTextNode(`：${description}`));
-    else moveChildren(item, content);
+    appendListContent(doc, item, content);
     const marker = sec(doc, `width:36px;background:${GREEN};display:flex;align-items:center;justify-content:center;color:#fff;font-size:${px(12, scale)};font-weight:800;`,
       doc.createTextNode(String(index + 1)));
     return featureCard(doc, scale, marker, content);
@@ -194,7 +201,7 @@ export const moyuTicketTheme = {
     p: 'margin:0 0 16px;padding:0 20px;font-size:14px;line-height:1.9;text-align:justify;color:#555 !important;',
     strong: `font-weight:700;color:${GREEN} !important;`,
     em: 'font-style:italic;color:#666 !important;',
-    a: `color:${GREEN} !important;font-weight:700;text-decoration:underline;overflow-wrap:anywhere;`,
+    a: `color:${GREEN} !important;font-weight:700;text-decoration:underline;overflow-wrap:break-word;`,
     u: 'text-decoration:none;border-bottom:2px solid #A7F3D0;font-weight:600;',
     mark: 'background:linear-gradient(120deg,#A7F3D0 0%,rgba(167,243,208,0) 100%);color:#111;padding:0 4px;font-weight:600;',
     s: 'color:#999;text-decoration:line-through;',

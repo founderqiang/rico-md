@@ -76,7 +76,7 @@ function chapter(h2, { index, isLast, number, tag, scale }) {
   const doc = h2.ownerDocument;
   h2.setAttribute('style', `margin:0 0 1px;font-size:${px(17, scale)};font-weight:800;color:${TITLE};letter-spacing:0.2px;line-height:1.5;font-family:${FONT};`);
 
-  return sec(doc, `margin:${index === 0 ? '8px' : '24px'} 0 24px;`,
+  return sec(doc, `margin:32px 0 24px;`,
     sec(doc, 'display:flex;align-items:center;gap:14px;',
       sec(doc, 'text-align:center;flex-shrink:0;',
         p(doc, `margin:0;font-size:${px(24, scale)};font-weight:800;color:${TITLE};line-height:1;letter-spacing:-2px;`, doc.createTextNode(isLast ? '///' : number)),
@@ -172,7 +172,7 @@ export const oliveJournalTheme = {
     p: `margin:0 0 24px;font-size:14px;line-height:1.9;text-align:justify;color:${BODY} !important;font-family:${FONT};`,
     strong: `font-weight:700;color:${TITLE} !important;`,
     em: 'font-style:italic;color:#65675e !important;',
-    a: `color:${TITLE} !important;text-decoration:none;border-bottom:2px solid ${ORANGE};overflow-wrap:anywhere;`,
+    a: `color:${TITLE} !important;text-decoration:none;border-bottom:2px solid ${ORANGE};overflow-wrap:break-word;`,
     u: `text-decoration:none;border-bottom:2px solid ${ORANGE};font-weight:600;color:${TITLE};`,
     mark: `background-color:${OLIVE_BG};padding:1px 5px;border-radius:4px;font-weight:600;color:${TITLE};border:1px solid ${BORDER};`,
     s: 'color:#9ea096;text-decoration:line-through;',

@@ -14,7 +14,7 @@ const HAIRLINE = '#E4E4E7';
 
 function pill(doc, scale, label) {
   return sp(doc,
-    `display:inline-block;font-size:${px(14, scale)};font-weight:700;color:${CHARCOAL};background:#F4F4F5;padding:3px 10px;border-radius:999px;`,
+    `display:inline-block;font-size:${px(14, scale)};font-weight:700;color:${CHARCOAL};background:#F4F4F5;padding:3px 10px;border-radius:999px;vertical-align:middle;`,
     sp(doc, `display:inline-block;width:6px;height:6px;background:${GRAPHITE};border-radius:50%;margin-right:5px;vertical-align:middle;`, leaf(doc)),
     doc.createTextNode(label));
 }
@@ -63,11 +63,13 @@ function chapter(h2, { index, isLast, number, tag, scale }) {
   const doc = h2.ownerDocument;
   h2.setAttribute('style', `font-size:${px(20, scale)};font-weight:800;color:${CHARCOAL};margin:0;letter-spacing:0.5px;line-height:1.4;font-family:${SANS};`);
 
-  return sec(doc, `margin:${index === 0 ? '16px' : '56px'} 0 32px;padding:0 10px;`,
+  return sec(doc, `margin:${index === 0 ? '32px' : '56px'} 0 32px;padding:0 10px;`,
     sec(doc, 'position:relative;padding-bottom:20px;border-bottom:1px solid #E4E4E7;',
       p(doc, `font-size:${px(48, scale)};font-weight:900;color:${HAIRLINE};margin:0;line-height:1;letter-spacing:-2px;`,
         doc.createTextNode(isLast ? '∞' : number)),
-      sec(doc, 'margin-top:-8px;',
+      // With a tag the label sits in the -8px overlap zone under the number;
+      // without one the title needs real breathing room below it.
+      sec(doc, `margin-top:${tag ? '-8px' : '8px'};`,
         tag ? p(doc, `font-size:${px(10, scale)};color:#A1A1AA;font-weight:500;letter-spacing:3px;margin:0 0 6px;text-transform:uppercase;`, doc.createTextNode(tag)) : null,
         h2
       )
@@ -93,12 +95,17 @@ function blockQuote(quote, { scale }) {
 function unorderedList(ul, { scale }) {
   const doc = ul.ownerDocument;
   return Array.from(ul.children).filter((child) => child.tagName === 'LI').map((item) => {
-    const { label, description } = splitListItem(item);
+    const { label, description, descriptionNodes } = splitListItem(item);
     const block = sec(doc, 'margin:0 10px 14px;');
-    if (label) block.appendChild(p(doc, 'margin:0 0 6px;', pill(doc, scale, label)));
     const desc = p(doc, `font-size:${px(14, scale)};color:#71717A;margin:0;line-height:1.7;text-align:justify;`);
-    if (description) desc.appendChild(doc.createTextNode(description));
-    else moveChildren(item, desc);
+    if (label) {
+      desc.appendChild(pill(doc, scale, label));
+      desc.appendChild(doc.createTextNode(' '));
+    }
+    if (descriptionNodes) descriptionNodes.forEach((node) => desc.appendChild(node));
+    else if (description) desc.appendChild(doc.createTextNode(description));
+    else if (!label) moveChildren(item, desc);
+    else return block;
     block.appendChild(desc);
     return block;
   });
@@ -164,7 +171,7 @@ export const graphiteMinimalTheme = {
     p: `margin:0 0 22px;padding:0 10px;font-size:15px;line-height:1.8;text-align:justify;color:${GRAPHITE} !important;letter-spacing:0.3px;`,
     strong: `font-weight:700;color:${CHARCOAL} !important;`,
     em: 'font-style:italic;color:#71717A !important;',
-    a: `color:${GRAPHITE} !important;font-weight:600;text-decoration:underline;overflow-wrap:anywhere;`,
+    a: `color:${GRAPHITE} !important;font-weight:600;text-decoration:underline;overflow-wrap:break-word;`,
     u: `text-decoration:none;border-bottom:2px solid ${GRAPHITE};font-weight:600;color:${CHARCOAL};`,
     mark: `background-color:#F4F4F5;color:${CHARCOAL};padding:2px 7px;border-radius:3px;font-weight:700;`,
     s: 'color:#A1A1AA;text-decoration:line-through;',

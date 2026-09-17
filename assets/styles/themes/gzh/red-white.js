@@ -11,7 +11,7 @@ const RED = '#DC2626';
 
 function pill(doc, scale, label) {
   return sp(doc,
-    `display:inline-block;font-size:${px(14, scale)};font-weight:700;color:#991B1B;background:#FEE2E2;padding:3px 10px;border-radius:999px;`,
+    `display:inline-block;font-size:${px(14, scale)};font-weight:700;color:#991B1B;background:#FEE2E2;padding:3px 10px;border-radius:999px;vertical-align:middle;`,
     sp(doc, 'display:inline-block;width:6px;height:6px;background:#DC2626;border-radius:50%;margin-right:5px;vertical-align:middle;', leaf(doc)),
     doc.createTextNode(label));
 }
@@ -61,7 +61,7 @@ function chapter(h2, { index, isLast, number, tag, scale }) {
   const doc = h2.ownerDocument;
   h2.setAttribute('style', `font-size:${px(18, scale)};font-weight:800;color:#1C1917;margin:0;letter-spacing:0.5px;line-height:1.4;font-family:${SANS};`);
 
-  return sec(doc, `margin:${index === 0 ? '16px' : '48px'} 0 28px;padding:0 10px;`,
+  return sec(doc, `margin:${index === 0 ? '32px' : '48px'} 0 28px;padding:0 10px;`,
     sec(doc, 'display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:3px solid #DC2626;',
       sec(doc, 'display:flex;align-items:center;',
         sp(doc, `display:inline-block;background:#DC2626;color:#FFFFFF;font-size:${px(18, scale)};font-weight:900;padding:4px 14px;border-radius:6px;margin-right:14px;line-height:1.3;`,
@@ -93,12 +93,17 @@ function blockQuote(quote, { scale }) {
 function unorderedList(ul, { scale }) {
   const doc = ul.ownerDocument;
   return Array.from(ul.children).filter((child) => child.tagName === 'LI').map((item) => {
-    const { label, description } = splitListItem(item);
+    const { label, description, descriptionNodes } = splitListItem(item);
     const block = sec(doc, 'margin:0 10px 14px;');
-    if (label) block.appendChild(p(doc, 'margin:0 0 6px;', pill(doc, scale, label)));
     const desc = p(doc, `font-size:${px(14, scale)};color:#4B5563;margin:0;line-height:1.7;text-align:justify;`);
-    if (description) desc.appendChild(doc.createTextNode(description));
-    else moveChildren(item, desc);
+    if (label) {
+      desc.appendChild(pill(doc, scale, label));
+      desc.appendChild(doc.createTextNode(' '));
+    }
+    if (descriptionNodes) descriptionNodes.forEach((node) => desc.appendChild(node));
+    else if (description) desc.appendChild(doc.createTextNode(description));
+    else if (!label) moveChildren(item, desc);
+    else return block;
     block.appendChild(desc);
     return block;
   });
@@ -163,7 +168,7 @@ export const redWhiteTheme = {
     p: 'margin:0 0 20px;padding:0 10px;font-size:15px;line-height:1.8;text-align:justify;color:#374151 !important;',
     strong: `font-weight:700;color:${RED} !important;`,
     em: 'font-style:italic;color:#4B5563 !important;',
-    a: `color:${RED} !important;font-weight:600;text-decoration:underline;overflow-wrap:anywhere;`,
+    a: `color:${RED} !important;font-weight:600;text-decoration:underline;overflow-wrap:break-word;`,
     u: 'text-decoration:none;border-bottom:2px solid #FECACA;font-weight:600;',
     mark: 'background-color:#FEE2E2;color:#991B1B;padding:2px 6px;border-radius:3px;font-weight:700;',
     s: 'color:#9CA3AF;text-decoration:line-through;',

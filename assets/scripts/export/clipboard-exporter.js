@@ -424,10 +424,25 @@ function removeInterstitialWhitespace(doc) {
   });
 }
 
+/**
+ * Side gutter the preview pipeline put on tables/code blocks so they align
+ * with the theme's body text (render-pipeline.js normalizeTableOverflow /
+ * applyCodeBlockStyles). Derived from the same source: the theme's `p`
+ * side padding; `0` for full-width themes.
+ */
+function resolveTextInset(styleConfig) {
+  const padding = extractStyleValue(styleConfig?.styles?.p || '', 'padding');
+  if (!padding) return '0';
+  const parts = padding.split(/\s+/).filter(Boolean);
+  // `padding: 0 20px` → right side `20px`; single value applies to all sides.
+  return parts.length === 1 ? parts[0] : parts[1];
+}
+
 function resolveCodeBlockExportStyles(styleConfig, codeTheme) {
+  const textInset = resolveTextInset(styleConfig);
   if (codeTheme) {
     return {
-      wrapper: 'display: block !important; margin: 0 !important; padding: 12px 0 !important;',
+      wrapper: `display: block !important; margin: 0 ${textInset} !important; padding: 12px 0 !important;`,
       frame: `padding: 16px !important; background: ${codeTheme.bg} !important; color: ${codeTheme.textColor} !important; border: 1px solid ${codeTheme.borderColor} !important; border-radius: 10px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important; -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;`,
       scrollArea: 'display: block !important; overflow-x: auto !important; overflow-y: hidden !important; padding: 0 0 12px 0 !important; -webkit-overflow-scrolling: touch !important;',
       content: 'display: inline-block !important; min-width: max-content !important;',
@@ -447,7 +462,7 @@ function resolveCodeBlockExportStyles(styleConfig, codeTheme) {
   const lineHeightFallback = extractStyleValue(cleanCodeStyle, 'line-height') ? '' : 'line-height: 1.7 !important;';
 
   return {
-    wrapper: 'display: block !important; margin: 0 !important; padding: 12px 0 !important;',
+    wrapper: `display: block !important; margin: 0 ${textInset} !important; padding: 12px 0 !important;`,
     frame: `padding: 16px !important; ${preStyle}`,
     scrollArea: 'display: block !important; overflow-x: auto !important; overflow-y: hidden !important; padding: 0 0 12px 0 !important; -webkit-overflow-scrolling: touch !important;',
     content: 'display: inline-block !important; min-width: max-content !important;',
@@ -468,6 +483,18 @@ function extractStyleValue(styleText, property) {
   const escapedProperty = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = styleText.match(new RegExp(`(?:^|;)\\s*${escapedProperty}\\s*:\\s*([^;]+)`, 'i'));
   return match ? match[1].trim() : null;
+}
+
+/** Pull one side out of a shorthand declaration, e.g. `margin:0 20px 24px` + right → `20px`. */
+function extractBoxSideValue(styleText, property, side) {
+  const value = extractStyleValue(styleText, property);
+  if (!value) return null;
+  const parts = value.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return null;
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) return side === 'top' || side === 'bottom' ? parts[0] : parts[1];
+  if (parts.length === 3) return side === 'top' ? parts[0] : side === 'bottom' ? parts[2] : parts[1];
+  return side === 'top' ? parts[0] : side === 'right' ? parts[1] : side === 'bottom' ? parts[2] : parts[3];
 }
 
 function scaleStyleConfigFontSizes(styleConfig, scale) {
@@ -710,7 +737,13 @@ function normalizeTablesForWechat(doc) {
   wrappedTables.forEach((table) => {
     const wrapper = table.parentElement;
     if (!wrapper || !wrapper.parentNode) return;
-    wrapper.parentNode.insertBefore(table, wrapper);
+    // WeChat strips div wrappers, so carry the preview's side gutter (which
+    // aligns tables with the theme's body text) over to a bare section.
+    const inset = extractBoxSideValue(wrapper.getAttribute('style') || '', 'margin', 'right') || '0';
+    const holder = doc.createElement('section');
+    holder.setAttribute('style', `display: block !important; margin: 0 ${inset} !important;`);
+    wrapper.parentNode.insertBefore(holder, wrapper);
+    holder.appendChild(table);
     wrapper.remove();
   });
 
