@@ -771,6 +771,9 @@ function insertThemeCoverTemplate() {
 
   const source = markdownInput.value;
   const firstHeading = source.match(/^#\s+([^\r\n]+)/m);
+  // Re-inserting is always allowed: an existing cover line is replaced, so the
+  // button doubles as “reset fields”.
+  const replacing = Boolean(firstHeading && /[｜|]\s*\w+=/.test(firstHeading[1]));
   const title = firstHeading?.[1]?.split(/[｜|]/)[0].trim() || '主标题';
   const template = `# ${title} | ${templateInfo.fields}`;
   const nextContent = firstHeading
@@ -781,18 +784,20 @@ function insertThemeCoverTemplate() {
   nextTick(() => {
     const textarea = getTextarea();
     if (!textarea) return;
-    // Put the cursor in the first field near the cover title. Focusing a field
-    // near the end of a long one-line template makes browsers scroll the editor
-    // to the bottom, hiding the freshly inserted cover.
-    const cursor = nextContent.indexOf('label=') + 'label='.length;
+    // Put the cursor at the first editable field of this theme's template.
+    // Focusing a field near the end of a long one-line template makes browsers
+    // scroll the editor to the bottom, hiding the freshly inserted cover.
+    const cursorKey = templateInfo.cursorKey || 'label=';
+    const cursor = nextContent.indexOf(cursorKey);
+    const cursorPos = cursor === -1 ? template.length : cursor + cursorKey.length;
     textarea.focus();
-    textarea.selectionStart = cursor;
-    textarea.selectionEnd = cursor;
+    textarea.selectionStart = cursorPos;
+    textarea.selectionEnd = cursorPos;
     textarea.scrollTop = 0;
     textarea.scrollLeft = 0;
     syncEditorSelection({ target: textarea });
   });
-  toast.show(`已插入${templateInfo.name}，可直接修改各字段`, 'success');
+  toast.show(replacing ? `已重置${templateInfo.name}的字段，主标题保持不变` : `已插入${templateInfo.name}，可直接修改各字段`, 'success');
 }
 
 function toggleStar(key) {
