@@ -18,23 +18,22 @@ function pill(doc, scale, label, color, bg) {
 
 function cover(h1, { scale, tag, footer, date, author }) {
   const doc = h1.ownerDocument;
-  const label = tag || '深度观点';
   const bottomStrip = footer || author
     ? sec(doc, 'background:linear-gradient(135deg,#059669,#10B981);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;',
         footer ? p(doc, 'font-size:12px;color:rgba(255,255,255,0.9);margin:0;font-weight:600;letter-spacing:0.5px;', doc.createTextNode(footer)) : null,
-        author ? p(doc, 'font-size:11px;color:rgba(255,255,255,0.78);margin:0 0 0 auto;font-weight:600;letter-spacing:0.5px;white-space:nowrap;', doc.createTextNode(`作者 · ${author}`)) : null)
+        author ? p(doc, 'font-size:11px;color:rgba(255,255,255,0.78);margin:0 0 0 auto;font-weight:600;letter-spacing:0.5px;white-space:nowrap;', doc.createTextNode(author)) : null)
     : null;
 
-  h1.setAttribute('style', `font-size:${px(24, scale)};font-weight:900;color:#111827;margin:0 0 16px;line-height:1.3;letter-spacing:-1px;font-family:${SANS};`);
+  h1.setAttribute('style', `font-size:${px(24, scale)};font-weight:700;color:#111827;margin:0 0 16px;line-height:1.3;letter-spacing:-1px;font-family:${SANS};`);
 
   return sec(doc,
     'margin:0 16px 32px;background:#fff;border:1.5px solid rgba(5,150,105,0.15);border-radius:20px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06);',
     sec(doc, 'padding:32px 28px 28px;',
       sec(doc, 'display:flex;align-items:center;gap:8px;margin-bottom:28px;',
         sp(doc, 'width:6px;height:6px;background:#059669;border-radius:50%;', leaf(doc)),
-        sp(doc, `font-size:${px(11, scale)};font-weight:700;letter-spacing:3px;color:#059669;`, doc.createTextNode(label)),
+        tag ? sp(doc, `font-size:${px(11, scale)};font-weight:700;letter-spacing:3px;color:#059669;`, doc.createTextNode(tag)) : null,
         sec(doc, 'flex:1;height:1px;overflow:hidden;background:linear-gradient(to right,rgba(5,150,105,0.12),transparent);', leaf(doc)),
-        sp(doc, `font-size:${px(10, scale)};color:#D1D5DB;font-weight:600;`, doc.createTextNode(date || currentDate()))
+        date ? sp(doc, `font-size:${px(10, scale)};color:#D1D5DB;font-weight:600;`, doc.createTextNode(date)) : null
       ),
       h1,
       sec(doc, 'width:48px;height:3px;background:linear-gradient(to right,#059669,#34D399);border-radius:2px;margin-bottom:12px;', leaf(doc))
@@ -43,25 +42,20 @@ function cover(h1, { scale, tag, footer, date, author }) {
   );
 }
 
-function currentDate() {
-  const now = new Date();
-  return `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
 function chapter(h2, { index, isLast, number, tag, scale }) {
   const doc = h2.ownerDocument;
-  h2.setAttribute('style', `margin:0 0 1px;font-size:${px(17, scale)};font-weight:900;color:#111827;letter-spacing:0.3px;line-height:1.5;font-family:${SANS};`);
+  h2.setAttribute('style', `margin:0 0 1px;font-size:${px(17, scale)};font-weight:700;color:#111827;letter-spacing:0.3px;line-height:1.5;font-family:${SANS};`);
 
   return sec(doc, `margin:${index === 0 ? '32px' : '48px'} 0 24px;padding:0 20px;`,
     sec(doc, 'display:flex;align-items:center;gap:16px;margin-bottom:24px;',
       sec(doc, 'text-align:center;flex-shrink:0;',
-        p(doc, `margin:0;font-size:${px(28, scale)};font-weight:900;color:#059669;line-height:1;letter-spacing:-2px;`, doc.createTextNode(isLast ? '///' : number)),
+        p(doc, `margin:0;font-size:${px(28, scale)};font-weight:700;color:#059669;line-height:1;letter-spacing:-2px;`, doc.createTextNode(isLast ? '///' : number)),
         p(doc, `margin:0;font-size:${px(8, scale)};font-weight:700;color:#D1D5DB;letter-spacing:2px;`, doc.createTextNode(isLast ? 'LAST' : 'PART'))
       ),
       sp(doc, 'width:1px;height:36px;background:#E5E7EB;flex-shrink:0;', leaf(doc)),
       sec(doc, '',
         h2,
-        tag ? p(doc, `margin:0;font-size:${px(11, scale)};font-weight:600;color:#9CA3AF;letter-spacing:1.5px;`, doc.createTextNode(tag)) : null
+        tag ? p(doc, `margin:0;font-size:${px(11, scale)};font-weight:400;color:#9CA3AF;letter-spacing:1.5px;`, doc.createTextNode(tag)) : null
       )
     )
   );
@@ -71,7 +65,7 @@ function h3sub(h3, { scale }) {
   const doc = h3.ownerDocument;
   const marker = sp(doc, 'background:linear-gradient(180deg,transparent 65%,#FDE68A 65%);padding:0 4px;');
   moveChildren(h3, marker);
-  h3.setAttribute('style', `margin:32px 0 16px;padding:0 20px;font-size:${px(15, scale)};font-weight:900;color:#111827;line-height:1.6;font-family:${SANS};`);
+  h3.setAttribute('style', `margin:32px 0 16px;padding:0 20px;font-size:${px(15, scale)};font-weight:700;color:#111827;line-height:1.6;font-family:${SANS};`);
   h3.appendChild(marker);
   return h3;
 }
@@ -160,12 +154,12 @@ function toc(items, { scale, doc }) {
   items.forEach((item, index) => {
     const active = index === 0;
     const cardStyle = active
-      ? 'flex:0 0 110px;display:flex;flex-direction:column;background:linear-gradient(135deg,#059669,#10B981);border-radius:12px;padding:12px;'
-      : 'flex:0 0 110px;display:flex;flex-direction:column;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);';
+      ? 'flex:0 0 120px;display:flex;flex-direction:column;background:linear-gradient(135deg,#059669,#10B981);border-radius:12px;padding:12px;'
+      : 'flex:0 0 120px;display:flex;flex-direction:column;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);';
     track.appendChild(sec(doc, cardStyle,
       p(doc, `font-size:${px(9, scale)};font-weight:700;color:${active ? 'rgba(255,255,255,0.7)' : '#9CA3AF'};letter-spacing:1px;margin:0 0 5px;`,
         doc.createTextNode(`PART ${index === items.length - 1 ? '///' : item.number}`)),
-      p(doc, `font-size:${px(13, scale)};font-weight:800;color:${active ? '#fff' : '#111827'};margin:0${item.tag ? ' 0 3px' : ''};`, doc.createTextNode(item.title)),
+      p(doc, `font-size:${px(12, scale)};font-weight:700;color:${active ? '#fff' : '#111827'};margin:0${item.tag ? ' 0 3px' : ''};`, doc.createTextNode(item.title)),
       item.tag
         ? p(doc, `font-size:${px(10, scale)};color:${active ? 'rgba(255,255,255,0.7)' : '#9CA3AF'};margin:0;line-height:1.45;`, doc.createTextNode(item.tag))
         : null
@@ -200,10 +194,10 @@ export const moyuGreenTheme = {
   preserveQuoteColors: true,
   styles: {
     container: `max-width:677px;box-sizing:border-box;margin:0 auto;padding:16px 0 32px;background-color:#FFFFFF !important;color:#374151 !important;font-family:${SANS};line-height:1.75;letter-spacing:0.5px;overflow-wrap:anywhere;`,
-    h1: `margin:0 0 28px;padding:0 20px;font-family:${SANS};font-size:24px;font-weight:900;line-height:1.3;color:#111827 !important;`,
-    h2: `margin:48px 0 24px;padding:0 20px;font-family:${SANS};font-size:17px;font-weight:900;line-height:1.5;color:#111827 !important;`,
-    h3: `margin:32px 0 16px;padding:0 20px;font-family:${SANS};font-size:15px;font-weight:900;line-height:1.6;color:#111827 !important;`,
-    h4: `margin:24px 0 14px;padding:0 20px;font-size:15px;font-weight:800;line-height:1.6;color:#111827 !important;`,
+    h1: `margin:0 0 28px;padding:0 20px;font-family:${SANS};font-size:24px;font-weight:700;line-height:1.3;color:#111827 !important;`,
+    h2: `margin:48px 0 24px;padding:0 20px;font-family:${SANS};font-size:17px;font-weight:700;line-height:1.5;color:#111827 !important;`,
+    h3: `margin:32px 0 16px;padding:0 20px;font-family:${SANS};font-size:15px;font-weight:700;line-height:1.6;color:#111827 !important;`,
+    h4: `margin:24px 0 14px;padding:0 20px;font-size:15px;font-weight:700;line-height:1.6;color:#111827 !important;`,
     h5: `margin:20px 0 10px;padding:0 20px;font-size:14px;font-weight:700;color:#111827 !important;`,
     h6: `margin:18px 0 10px;padding:0 20px;font-size:13px;font-weight:700;color:#9CA3AF !important;`,
     p: 'margin:0 0 16px;padding:0 20px;font-size:14px;line-height:1.9;text-align:justify;color:#374151 !important;',

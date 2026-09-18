@@ -12,7 +12,7 @@
  * one font-size per <p>, structure built from <section>/<span> only.
  */
 
-export const SANS = "-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif";
+export const SANS = "'MiSans','PingFang SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif";
 export const SERIF = "'Noto Serif SC','Songti SC',STSong,Georgia,'Times New Roman',serif";
 export const MONO = "Consolas,Menlo,Monaco,'Courier New',monospace";
 
