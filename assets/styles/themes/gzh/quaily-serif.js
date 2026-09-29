@@ -49,14 +49,14 @@ function cover(h1, { scale, tag, subtitle, footer, date, author }) {
   );
 }
 
-function chapter(h2, { index, isLast, number, tag, scale }) {
+function chapter(h2, { index, number, tag, scale }) {
   const doc = h2.ownerDocument;
   h2.setAttribute('style', `margin:0 0 2px;font-size:${px(19, scale)};font-weight:800;color:${INK};letter-spacing:0.5px;line-height:1.45;font-family:${SERIF};`);
 
   return sec(doc, `margin:${index === 0 ? '32px' : '44px'} 0 24px;padding:0 8px;`,
     sec(doc, 'display:flex;align-items:baseline;gap:14px;margin-bottom:18px;',
       sp(doc, `font-family:${SERIF};font-size:${px(26, scale)};font-weight:800;color:${RED};line-height:1;flex-shrink:0;`,
-        doc.createTextNode(isLast ? '§' : number)),
+        doc.createTextNode(number)),
       sec(doc, 'flex:1;',
         h2,
         tag ? p(doc, `margin:0;font-size:${px(11, scale)};font-weight:400;color:#9A94B8;letter-spacing:1.5px;font-family:${SANS};`, doc.createTextNode(tag)) : null
@@ -158,7 +158,7 @@ function toc(items, { scale, doc }) {
   const rows = items.map((item, index, all) => p(doc,
     `margin:0;padding:11px 2px;border-bottom:1px solid rgba(24,24,50,0.1);${index === all.length - 1 ? 'border-bottom:0;' : ''}display:flex;align-items:baseline;gap:12px;`,
     sp(doc, `font-family:${SERIF};font-size:${px(13, scale)};font-weight:800;color:${RED};flex-shrink:0;`,
-      doc.createTextNode(index === items.length - 1 ? '§' : item.number)),
+      doc.createTextNode(item.number)),
     sp(doc, `font-size:${px(13, scale)};font-weight:600;color:${INK};flex:1;`, doc.createTextNode(item.title)),
     item.tag ? sp(doc, `font-size:${px(10, scale)};color:#9A94B8;flex-shrink:0;`, doc.createTextNode(item.tag)) : null
   ));

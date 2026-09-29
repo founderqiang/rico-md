@@ -38,7 +38,7 @@ function cover(h1, { scale, tag, footer, date, author }) {
     sec(doc, 'padding:32px 28px 28px;',
       sec(doc, 'display:flex;align-items:center;gap:8px;margin-bottom:28px;',
         sp(doc, `width:6px;height:6px;background:${GOLD};border-radius:50%;`, leaf(doc)),
-        tag ? sp(doc, `font-size:${px(11, scale)};font-weight:700;letter-spacing:3px;color:${BLUE};`, doc.createTextNode(tag)) : null,
+        tag ? sp(doc, `font-size:${px(11, scale)};font-weight:500;letter-spacing:3px;color:${BLUE};`, doc.createTextNode(tag)) : null,
         sec(doc, 'flex:1;height:1px;overflow:hidden;background:linear-gradient(to right,rgba(45,109,195,0.12),transparent);', leaf(doc)),
         date ? sp(doc, `font-size:${px(10, scale)};color:#C9BFAF;font-weight:600;`, doc.createTextNode(date)) : null
       ),
@@ -162,7 +162,7 @@ function toc(items, { scale, doc }) {
       ? `flex:0 0 120px;display:flex;flex-direction:column;background:linear-gradient(135deg,${BLUE},${BLUE_SOFT});border-radius:12px;padding:12px;`
       : `flex:0 0 120px;display:flex;flex-direction:column;background:#fff;border:1px solid ${BORDER};border-radius:12px;padding:12px;box-shadow:0 2px 6px rgba(45,109,195,0.05);`;
     track.appendChild(sec(doc, cardStyle,
-      p(doc, `font-size:${px(9, scale)};font-weight:700;color:${active ? 'rgba(255,255,255,0.7)' : '#C9BFAF'};letter-spacing:1px;margin:0 0 5px;`,
+      p(doc, `font-size:${px(9, scale)};font-weight:400;color:${active ? 'rgba(255,255,255,0.7)' : '#C9BFAF'};letter-spacing:1px;margin:0 0 5px;`,
         doc.createTextNode(`PART ${index === items.length - 1 ? '///' : item.number}`)),
       p(doc, `font-size:${px(12, scale)};font-weight:700;color:${active ? '#fff' : TEXT};margin:0${item.tag ? ' 0 3px' : ''};`, doc.createTextNode(item.title)),
       item.tag
