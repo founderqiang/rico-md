@@ -77,6 +77,10 @@ const imageRadiusModeOptions = [
   { label: '圆角', value: 'px' },
   { label: '圆形', value: 'circle' }
 ];
+const bgColorModeOptions = [
+  { label: '默认', value: 'theme', meta: '跟随主题' },
+  { label: '自定义', value: 'custom', meta: '覆盖样式' }
+];
 
 const GZH_COVER_TEMPLATES = Object.freeze({
   'gzh-moyu-green': {
@@ -102,6 +106,24 @@ const GZH_COVER_TEMPLATES = Object.freeze({
     fields: 'label=刊读 | subtitle=一句话摘要 | issue=NO.09 | footer=署名 | author=作者',
     cursorKey: 'label=',
     description: '插入刊头、摘要、期号和底部署名字段。'
+  },
+  'gzh-quaily': {
+    name: 'Quaily 封面模板',
+    fields: 'tag=栏目 | subtitle=一句话摘要 | date=2026-09 | footer=底部署名 | author=作者',
+    cursorKey: 'tag=',
+    description: '插入栏目、日期和底部署名字段。'
+  },
+  'gzh-retro-blue': {
+    name: 'Rico 复古封面模板',
+    fields: 'tag=栏目 | footer=底部署名 | date=2026.09 | author=作者',
+    cursorKey: 'tag=',
+    description: '插入栏目、日期和底部署名字段。'
+  },
+  'gzh-focus-writing': {
+    name: '专注写作封面模板',
+    fields: 'label=FOCUS WRITING | stars=5 | subtitle=一句话概括文章的核心观点 | author=你的名字 | authorBio=你的领域 · 你的分享方向 | summary=这里写一段简短总结，介绍文章讨论的问题，以及读者能从中获得什么。 | tags=写作,工具 | issue=NO. 001 | aside=周刊观察 | grade=A | footer=WRITTEN WITH FOCUS | footerRight=ADMIT ONE ✂',
+    cursorKey: 'summary=',
+    description: '插入完整票据示例，含星级、作者简介、摘要和标签；不需要的字段可删除。'
   }
 });
 
@@ -138,6 +160,7 @@ const filteredDocuments = computed(() => {
 });
 
 const isImageStyleCustom = computed(() => displaySettings.value.imageStyleMode === 'custom');
+const isBgColorCustom = computed(() => displaySettings.value.bgColorMode === 'custom');
 const isGzhTheme = computed(() => typeof currentStyle.value === 'string' && currentStyle.value.startsWith('gzh-'));
 const themeTemplateInfo = computed(() => {
   const template = GZH_COVER_TEMPLATES[currentStyle.value];
@@ -859,6 +882,15 @@ function setImageRadiusMode(value) {
   updateImageDisplaySettings({ imageRadiusMode: value });
 }
 
+function setBgColorMode(value) {
+  if (!['theme', 'custom'].includes(value)) return;
+  updateDisplaySettings({ bgColorMode: value });
+}
+
+function updateBgColor(value) {
+  updateDisplaySettings({ bgColorMode: 'custom', bgColor: value });
+}
+
 function setFooterCta(value) {
   if (typeof value !== 'boolean') return;
   updateDisplaySettings({ footerCta: value });
@@ -1372,6 +1404,7 @@ const app = createApp({
       documentSearch,
       filteredDocuments,
       isImageStyleCustom,
+      isBgColorCustom,
       isGzhTheme,
       themeTemplateInfo,
       previewMode,
@@ -1396,6 +1429,7 @@ const app = createApp({
       fontScaleOptions,
       imageStyleModeOptions,
       imageRadiusModeOptions,
+      bgColorModeOptions,
       codeBlockSettings,
       displaySettings,
       STYLES,
@@ -1423,6 +1457,8 @@ const app = createApp({
       setImageStyleMode,
       setFontScale,
       setImageRadiusMode,
+      setBgColorMode,
+      updateBgColor,
       setFooterCta,
       setSpacingMode,
       updateSpacingMetric,

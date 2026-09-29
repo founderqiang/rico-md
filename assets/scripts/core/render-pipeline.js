@@ -103,9 +103,28 @@ function applyInlineStyles(html, styleConfig, codeTheme, displaySettings) {
   applySpacingDisplaySettings(doc, displaySettings);
 
   const container = doc.createElement('div');
-  container.setAttribute('style', scaledStyle.container);
+  const containerStyle = displaySettings?.bgColorMode === 'custom'
+    ? replaceBackgroundColor(scaledStyle.container, normalizeCustomBgColor(displaySettings.bgColor))
+    : scaledStyle.container;
+  container.setAttribute('style', containerStyle);
   container.innerHTML = doc.body.innerHTML;
   return container.outerHTML;
+}
+
+/**
+ * Swap every background-color declaration in an inline style string for the
+ * custom color, so the override wins regardless of how the paste target
+ * resolves duplicate declarations.
+ */
+function replaceBackgroundColor(styleText, color) {
+  const cleaned = String(styleText || '').replace(/background-color\s*:[^;]*;?/gi, '').trim();
+  const joiner = cleaned && !cleaned.endsWith(';') ? ';' : '';
+  return `${cleaned}${joiner}background-color:${color} !important;`;
+}
+
+function normalizeCustomBgColor(value) {
+  const normalized = String(value || '').trim();
+  return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized) ? normalized : '#FFFFFF';
 }
 
 function applySpacingDisplaySettings(doc, displaySettings) {

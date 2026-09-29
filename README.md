@@ -39,7 +39,7 @@
 
 ### 4. 主题与代码面板
 - 内置多套公众号排版主题，按风格分类：
-  - **gzh-design-skill**：摸鱼绿、红白色系、石墨极简风、留白禅意风、摸鱼票据风、橄榄手记、墨蓝刊读风（[适配说明](docs/gzh-design-skill.md)）
+  - **gzh-design-skill**：摸鱼绿、红白色系、石墨极简风、留白禅意风、摸鱼票据风、橄榄手记、墨蓝刊读风、Quaily 极简刊、Rico 复古、专注写作（[适配说明](docs/gzh-design-skill.md)）
   - **简约主义**：默认、极简、科技、优雅简约、沉浸阅读、Jony Ive
   - **技术阅读**：Anthropic、Wired、Medium 阅读、Apple 极简、AI Coder
   - **传统质感**：纸纪、晚点深度、金融时报、墨线·报纸、杂志
@@ -48,7 +48,7 @@
 
 #### gzh-design-skill 主题包
 
-该主题包适配自 [isjiamu/gzh-design-skill](https://github.com/isjiamu/gzh-design-skill) 的公众号排版主题体系。前六套为其正式主题；墨蓝刊读风来自该仓库的第七个候选主题预览。选中支持封面的主题后，可在主题分组底部直接“插入模板”，保留主标题并填入可编辑的封面字段；橄榄手记还可上传图片替换右侧封面图。字段、兼容范围与许可见 [gzh-design-skill 适配说明](docs/gzh-design-skill.md)。
+该主题包适配自 [isjiamu/gzh-design-skill](https://github.com/isjiamu/gzh-design-skill) 的公众号排版主题体系。前六套为其正式主题；墨蓝刊读风来自该仓库的第七个候选主题预览；Quaily 极简刊、Rico 复古与专注写作为本项目新增（分别依据 quaily.com 文章页、复古蓝设计规范与 Moonvy 博客文章页）。选中支持封面的主题后，可在主题分组底部直接“插入模板”，保留主标题并填入可编辑的封面字段；橄榄手记还可上传图片替换右侧封面图。字段、兼容范围与许可见 [gzh-design-skill 适配说明](docs/gzh-design-skill.md)。
 
 
 ### 5. 图片处理（本地优先）

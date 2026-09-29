@@ -21,6 +21,7 @@ const DEFAULT_CODE_BLOCK_SETTINGS = {
 const FONT_SCALE_VALUES = [0.75, 0.85, 1, 1.15, 1.3, 1.5];
 const IMAGE_STYLE_MODES = ['theme', 'custom'];
 const IMAGE_RADIUS_MODES = ['px', 'circle'];
+const BG_COLOR_MODES = ['theme', 'custom'];
 
 const LEGACY_IMAGE_SPACING_MAP = {
   compact: { top: 12, bottom: 16 },
@@ -51,6 +52,8 @@ const DEFAULT_DISPLAY_SETTINGS = {
   footerCtaReadLabel: '在看',
   footerCtaShareLabel: '转发',
   spacingMode: 'theme',
+  bgColorMode: 'theme',
+  bgColor: '#FFFFFF',
   headingLineHeight: 1.5,
   bodyLineHeight: 1.8,
   headingMarginTop: 32,
@@ -152,6 +155,9 @@ function normalizeDisplaySettings(settings) {
   const imageRadiusMode = IMAGE_RADIUS_MODES.includes(settings.imageRadiusMode)
     ? settings.imageRadiusMode
     : DEFAULT_DISPLAY_SETTINGS.imageRadiusMode;
+  const bgColorMode = BG_COLOR_MODES.includes(settings.bgColorMode)
+    ? settings.bgColorMode
+    : DEFAULT_DISPLAY_SETTINGS.bgColorMode;
 
   return {
     fontScale: validScale,
@@ -161,6 +167,8 @@ function normalizeDisplaySettings(settings) {
     footerCtaReadLabel: normalizeShortText(settings.footerCtaReadLabel, DEFAULT_DISPLAY_SETTINGS.footerCtaReadLabel, 12),
     footerCtaShareLabel: normalizeShortText(settings.footerCtaShareLabel, DEFAULT_DISPLAY_SETTINGS.footerCtaShareLabel, 12),
     spacingMode: settings.spacingMode === 'custom' ? 'custom' : 'theme',
+    bgColorMode,
+    bgColor: normalizeHexColor(settings.bgColor, DEFAULT_DISPLAY_SETTINGS.bgColor),
     headingLineHeight: clampNumber(settings.headingLineHeight, 1, 3, DEFAULT_DISPLAY_SETTINGS.headingLineHeight, 2),
     bodyLineHeight: clampNumber(settings.bodyLineHeight, 1, 3, DEFAULT_DISPLAY_SETTINGS.bodyLineHeight, 2),
     headingMarginTop: clampNumber(settings.headingMarginTop, 0, 100, DEFAULT_DISPLAY_SETTINGS.headingMarginTop),

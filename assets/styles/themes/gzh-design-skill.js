@@ -24,6 +24,9 @@ import { zenWhitespaceTheme } from './gzh/zen-whitespace.js';
 import { moyuTicketTheme } from './gzh/moyu-ticket.js';
 import { oliveJournalTheme } from './gzh/olive-journal.js';
 import { monoBlueEditorialTheme } from './gzh/mono-blue-editorial.js';
+import { quailySerifTheme } from './gzh/quaily-serif.js';
+import { retroBlueTheme } from './gzh/retro-blue.js';
+import { focusWritingTheme } from './gzh/focus-writing.js';
 
 // Upstream (isjiamu/gzh-design-skill) ends every produced article with a
 // hidden `<mp-style-type data-value="3">` marker. It tells the WeChat editor
@@ -40,5 +43,8 @@ export const GZH_DESIGN_THEMES = {
   'gzh-zen-whitespace': withWechatStyleModule(zenWhitespaceTheme),
   'gzh-moyu-ticket': withWechatStyleModule(moyuTicketTheme),
   'gzh-olive-journal': withWechatStyleModule(oliveJournalTheme),
-  'gzh-mono-blue-editorial': withWechatStyleModule(monoBlueEditorialTheme)
+  'gzh-mono-blue-editorial': withWechatStyleModule(monoBlueEditorialTheme),
+  'gzh-quaily': withWechatStyleModule(quailySerifTheme),
+  'gzh-retro-blue': withWechatStyleModule(retroBlueTheme),
+  'gzh-focus-writing': withWechatStyleModule(focusWritingTheme)
 };

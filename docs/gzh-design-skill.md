@@ -11,12 +11,15 @@
 | 摸鱼票据风 | 米黄纸底、黑框硬阴影、绿色撕票虚线，14px 正文 |
 | 橄榄手记 | 米白底、墨黑刊头、橄榄灰边框与橙色划线，14px 正文 |
 | 墨蓝刊读风 | 黑白刊读封面、克莱因蓝点缀与衬线章节编号，14px 正文 |
+| Quaily 极简刊 | 暖白纸底、衬线大标题、编辑红点缀、灰底引用卡与双线分隔线，15px 正文 |
+| Rico 复古 | 暖纸底、编辑蓝点缀、墨色标题正文、金色虚线下划线与蓝色表头，14px 正文 |
+| 专注写作 | 票据结构与 Moonvy 紫罗兰配色、白卡软阴影圆角、浅蓝代码底与黄色荧光标记，15px 正文 |
 
 这是面向通用 Markdown 的主题适配，覆盖标题、段落、强调、引用、列表、代码、表格、分隔线和图片。红白、石墨主题将文章开头（或一级标题之后）的引用显示为引言卡。`<u>关键词</u>` 使用各主题的下划线色，`<mark>关键词</mark>` 使用主题高亮色；标准 `**加粗**` 保留文字加粗，不把下划线挂在 strong 上。
 
 ## 封面标题写法
 
-摸鱼绿、摸鱼票据、橄榄手记、墨蓝刊读风的一级标题都支持 `|`（也支持全角 `｜`）分隔的封面元数据。原有简写 `# 主标题 | 顶部标签 | 底部署名 | 日期 | 作者` 仍可使用；需要控制主题的刊头或装饰位时，使用具名字段：
+摸鱼绿、摸鱼票据、橄榄手记、墨蓝刊读风、Quaily 极简刊、Rico 复古、专注写作的一级标题都支持 `|`（也支持全角 `｜`）分隔的封面元数据。原有简写 `# 主标题 | 顶部标签 | 底部署名 | 日期 | 作者` 仍可使用；需要控制主题的刊头或装饰位时，使用具名字段：
 
 ```md
 # 主标题 | label=刊头 | subtitle=摘要 | issue=NO. 001 | footer=底部左文案 | footerRight=底部右文案 | author=甲木
@@ -38,6 +41,6 @@
 
 ## 来源与许可
 
-参考：[isjiamu/gzh-design-skill](https://github.com/isjiamu/gzh-design-skill)，[六套主题长图](https://github.com/isjiamu/gzh-design-skill/blob/main/docs/all-themes.md)。前六套主题来自用户提供的 `开发/gzh-design-skill-main/references/theme-*.md`；墨蓝刊读风适配自该仓库内未注册的第七个候选主题预览，不含 archive 历史主题。
+参考：[isjiamu/gzh-design-skill](https://github.com/isjiamu/gzh-design-skill)，[六套主题长图](https://github.com/isjiamu/gzh-design-skill/blob/main/docs/all-themes.md)。前六套主题来自用户提供的 `开发/gzh-design-skill-main/references/theme-*.md`；墨蓝刊读风适配自该仓库内未注册的第七个候选主题预览，不含 archive 历史主题。Quaily 极简刊与 Rico 复古（原名复古蓝）为本项目新增，组件流沿用摸鱼绿模板：前者依据 `开发/new-themes/quaily.md` 设计规范与 quaily.com 文章页参考图（`开发/new-themes/Quaily.jpg`），后者依据 `开发/new-themes/retro-blue.md`；专注写作以摸鱼票据风的组件结构为模板，视觉依据 [Moonvy 博客文章页](https://moonvy.com/blog/post/2026/Moonvy-Update/)。
 
 Copyright (C) 2026 甲木 (Jiamu) × 摸鱼小李 (Moyu Xiaoli)。上游采用 AGPL-3.0-or-later，主题适配模块 `assets/styles/themes/gzh-design-skill.js` 保留相同许可，完整许可见 [licenses/gzh-design-skill.txt](../licenses/gzh-design-skill.txt)。本项目原有代码的 MIT 许可不替代此模块的上游许可。

@@ -61,6 +61,10 @@
             <svg class="lucide lucide-code-xml" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 16 4-4-4-4"></path><path d="m6 8-4 4 4 4"></path><path d="m14.5 4-5 16"></path></svg>
             代码
           </button>
+          <button class="header-nav-btn" :class="{ active: activePanel === 'misc' }" @click="togglePanel('misc')">
+            <svg class="lucide lucide-sliders-horizontal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"></line><line x1="10" x2="3" y1="4" y2="4"></line><line x1="21" x2="12" y1="12" y2="12"></line><line x1="8" x2="3" y1="12" y2="12"></line><line x1="21" x2="16" y1="20" y2="20"></line><line x1="12" x2="3" y1="20" y2="20"></line><line x1="14" x2="14" y1="2" y2="6"></line><line x1="8" x2="8" y1="10" y2="14"></line><line x1="16" x2="16" y1="18" y2="22"></line></svg>
+            样式
+          </button>
           <button class="header-nav-btn" :class="{ active: activePanel === 'settings' }" @click="togglePanel('settings')">
             <svg class="lucide lucide-graduation-cap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.92 12 5.5l-9.42 5.42L12 16.5l9.42-5.58Z"></path><path d="M6 13.5v5c3 2 9 2 12 0v-5"></path><path d="M21.42 10.92V16"></path></svg>
             教学
@@ -289,7 +293,7 @@
             </button>
             <button class="right-panel-tab" :class="{ active: activePanel === 'misc' }" @click="togglePanel('misc')">
               <svg class="lucide lucide-sliders-horizontal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"></line><line x1="10" x2="3" y1="4" y2="4"></line><line x1="21" x2="12" y1="12" y2="12"></line><line x1="8" x2="3" y1="12" y2="12"></line><line x1="21" x2="16" y1="20" y2="20"></line><line x1="12" x2="3" y1="20" y2="20"></line><line x1="14" x2="14" y1="2" y2="6"></line><line x1="8" x2="8" y1="10" y2="14"></line><line x1="16" x2="16" y1="18" y2="22"></line></svg>
-              其他
+              样式
             </button>
             <button class="right-panel-close" @click="togglePanel(activePanel)">
               <svg class="lucide lucide-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
@@ -477,6 +481,50 @@
                   </div>
                   <button class="misc-reset-btn" @click="resetSpacingSettings">恢复主题默认</button>
                   <p class="misc-panel-note">自定义会同时作用于预览、复制到公众号和导出 HTML。</p>
+                </div>
+
+                <div class="misc-panel-section">
+                  <div class="code-panel-section-title">背景颜色</div>
+
+                  <div class="misc-setting-row">
+                    <div class="misc-setting-label">模式</div>
+                    <div class="misc-button-grid misc-button-grid-dual">
+                      <button
+                        v-for="option in bgColorModeOptions"
+                        :key="`bg-color-mode-${option.value}`"
+                        class="segmented-option-btn"
+                        :class="{ active: displaySettings.bgColorMode === option.value }"
+                        @click="setBgColorMode(option.value)"
+                      >
+                        <span>{{ option.label }}</span>
+                        <small>{{ option.meta }}</small>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="misc-control-stack" :class="{ disabled: !isBgColorCustom }">
+                    <div class="misc-setting-row">
+                      <div class="misc-setting-label">颜色</div>
+                      <div class="misc-color-row">
+                        <input
+                          class="misc-color-input"
+                          type="color"
+                          :value="displaySettings.bgColor"
+                          :disabled="!isBgColorCustom"
+                          @input="updateBgColor($event.target.value)"
+                        >
+                        <input
+                          class="misc-text-input"
+                          type="text"
+                          :value="displaySettings.bgColor"
+                          :disabled="!isBgColorCustom"
+                          @input="updateBgColor($event.target.value)"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                  <p class="misc-panel-note" v-if="!isBgColorCustom">当前为默认模式，背景色完全跟随主题本身样式。</p>
+                  <p class="misc-panel-note" v-else>自定义背景色会覆盖主题的正文底色，同时作用于预览、复制到公众号和导出 HTML。</p>
                 </div>
 
                 <div class="misc-panel-section">
@@ -749,7 +797,7 @@
             </div>
             <div class="panel-settings-group tutorial-section">
               <h4 class="tutorial-section-title">主题封面字段</h4>
-              <p class="tutorial-section-desc">摸鱼绿、摸鱼票据、橄榄手记、墨蓝刊读风共用这套写法；只填想显示的字段。</p>
+              <p class="tutorial-section-desc">摸鱼绿、摸鱼票据、橄榄手记、墨蓝刊读风、Quaily 极简刊、Rico 复古、专注写作共用这套写法；只填想显示的字段。</p>
               <code class="tutorial-code"><span># 主标题</span><span>| label=刊头</span><span>| subtitle=摘要</span><span>| summary=短总结</span><span>| issue=NO. 001</span><span>| footer=署名</span></code>
               <dl class="tutorial-field-list">
                 <div><dt>label</dt><dd>顶部刊头</dd></div>

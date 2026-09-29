@@ -179,9 +179,11 @@ function cta({ scale, doc, displaySettings }) {
     thirdLabel: '星标',
     thirdIcon: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>'
   });
-  // Replace default footer with the dashed tear footer.
+  // Replace the default footer paragraph with the dashed tear footer. The
+  // icons row is a <section>, so the tag guard keeps it intact even though
+  // this skin ships no default footer of its own.
   const footer = card.lastElementChild;
-  if (footer) card.removeChild(footer);
+  if (footer && footer.tagName === 'P') card.removeChild(footer);
   card.appendChild(sec(doc, 'border-top:1px dashed #ccc;padding-top:12px;',
     p(doc, `font-size:${px(10, scale)};color:#999;letter-spacing:2px;margin:0;`, doc.createTextNode('THANKS FOR READING ✂'))));
   return card;

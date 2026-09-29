@@ -16,7 +16,7 @@ export const THEME_CATEGORIES = {
 };
 
 /** 推荐主题列表 */
-const RECOMMENDED = ['wechat-default', 'wechat-anthropic','minimalism', 'wechat-paperpress','kenya-emptiness','wechat-jonyive', 'kami-paper'];
+const RECOMMENDED = ['wechat-default', 'gzh-moyu-green', 'gzh-quaily', 'gzh-retro-blue'];
 
 /**
  * 获取所有主题列表
