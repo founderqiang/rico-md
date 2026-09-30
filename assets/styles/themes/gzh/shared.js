@@ -114,14 +114,14 @@ export function inlineContentOf(node) {
 
 /**
  * Split list-item text into a short label and an optional description at the
- * first colon. Returns { label, description, descriptionNodes } — description
- * empty when the item is label-only, label empty when the item is too long
- * to pill-ify. When the label is plain leading text, descriptionNodes keeps
+ * first colon. By default, items of up to 12 characters also become labels;
+ * themes with uniform bullet lists can disable that with shortAsLabel: false.
+ * When the label is plain leading text, descriptionNodes keeps
  * the item's inline elements (links, strong, code …) intact instead of
  * flattening them to text; otherwise it is null and callers fall back to the
  * plain-text description.
  */
-export function splitListItem(item) {
+export function splitListItem(item, { shortAsLabel = true } = {}) {
   const clone = item.cloneNode(true);
   clone.querySelectorAll('p').forEach((child) => {
     const parent = child.parentNode;
@@ -148,7 +148,7 @@ export function splitListItem(item) {
     }
     return { label: colon[1], description: colon[2], descriptionNodes };
   }
-  if (text.length <= 12) return { label: text, description: '', descriptionNodes: null };
+  if (shortAsLabel && text.length <= 12) return { label: text, description: '', descriptionNodes: null };
   return { label: '', description: text, descriptionNodes: null };
 }
 
@@ -199,6 +199,19 @@ export function extractQuoteParts(blockquote) {
 /** Recursively move all children from one node into another. */
 export function moveChildren(from, to) {
   while (from.firstChild) to.appendChild(from.firstChild);
+}
+
+/** Keep inline formatting in a short list label without nesting a <p> in a badge. */
+export function moveListItemInline(item, target) {
+  while (item.firstChild) {
+    const child = item.firstChild;
+    if (child.nodeType === 1 && child.tagName === 'P') {
+      moveChildren(child, target);
+      child.remove();
+    } else {
+      target.appendChild(child);
+    }
+  }
 }
 
 /** Wrap `heading` (keeping it for TOC anchors) inside a built container. */

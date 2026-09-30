@@ -5,7 +5,7 @@
  */
 import { applyComponentFlow } from './engine.js';
 import {
-  sec, p, sp, leaf, px, splitListItem, moveChildren, buildCtaCard, SANS, MONO
+  sec, p, sp, leaf, px, splitListItem, moveChildren, moveListItemInline, buildCtaCard, SANS, MONO
 } from './shared.js';
 
 const BLUE = '#2D6DC3';
@@ -112,12 +112,26 @@ function blockQuote(quote, { scale }) {
 function unorderedList(ul, { scale }) {
   const doc = ul.ownerDocument;
   return Array.from(ul.children).filter((child) => child.tagName === 'LI').map((item) => {
-    const { label, description, descriptionNodes } = splitListItem(item);
+    const { label, description, descriptionNodes } = splitListItem(item, { shortAsLabel: false });
+    if (!label) {
+      const row = sec(doc, 'display:flex;align-items:flex-start;gap:9px;margin:0 8px 10px;');
+      const dot = sp(doc, `display:inline-block;width:${px(6, scale)};height:${px(6, scale)};flex-shrink:0;margin-top:${px(10, scale)};border-radius:50%;background:${BLUE};font-size:0;line-height:0;overflow:hidden;`, leaf(doc));
+      const content = p(doc, `flex:1;min-width:0;font-size:${px(14, scale)};color:${TEXT};margin:0;line-height:1.8;`);
+      moveListItemInline(item, content);
+      row.appendChild(dot);
+      row.appendChild(content);
+      return row;
+    }
     const block = sec(doc, 'margin:0 8px 14px;');
     const desc = p(doc, `font-size:${px(13, scale)};color:${TEXT};margin:0;line-height:1.7;text-align:justify;`);
     if (label) {
-      desc.appendChild(pill(doc, scale, label));
-      desc.appendChild(doc.createTextNode(' '));
+      const badge = pill(doc, scale, label);
+      if (!description && !descriptionNodes) {
+        badge.lastChild.remove();
+        moveListItemInline(item, badge);
+      }
+      desc.appendChild(badge);
+      if (description || descriptionNodes) desc.appendChild(doc.createTextNode(' '));
     }
     if (descriptionNodes) {
       descriptionNodes.forEach((node) => desc.appendChild(node));
@@ -125,8 +139,6 @@ function unorderedList(ul, { scale }) {
       desc.appendChild(doc.createTextNode(description));
     } else if (!label) {
       moveChildren(item, desc);
-    } else {
-      return block;
     }
     block.appendChild(desc);
     return block;

@@ -117,22 +117,16 @@ function blockQuote(quote, { scale }) {
   return card;
 }
 
-function featureCard(doc, scale, markerColumn, content) {
-  return sec(doc, `background:${CREAM};border:1px solid #eee;margin-bottom:12px;`,
-    sec(doc, 'display:flex;align-items:stretch;',
-      markerColumn,
-      sec(doc, `flex:1;padding:12px 16px;font-size:${px(13, scale)};color:#555;line-height:1.7;border-left:1px dashed ${TEAR};`, content)
-    )
-  );
-}
-
 function appendListContent(doc, item, content) {
   const { label, description, descriptionNodes } = splitListItem(item);
-  if (label) content.appendChild(sp(doc, `font-weight:600;color:${INK};`, doc.createTextNode(label)));
-  if (descriptionNodes) {
+  if (label && !description && !descriptionNodes) {
+    moveChildren(item, content);
+  } else if (label && descriptionNodes) {
+    content.appendChild(sp(doc, `font-weight:600;color:${INK};`, doc.createTextNode(label)));
     content.appendChild(doc.createTextNode('：'));
     descriptionNodes.forEach((node) => content.appendChild(node));
-  } else if (description) {
+  } else if (label && description) {
+    content.appendChild(sp(doc, `font-weight:600;color:${INK};`, doc.createTextNode(label)));
     content.appendChild(doc.createTextNode(`：${description}`));
   } else {
     moveChildren(item, content);
@@ -141,21 +135,21 @@ function appendListContent(doc, item, content) {
 
 function unorderedList(ul, { scale, doc }) {
   return Array.from(ul.children).filter((child) => child.tagName === 'LI').map((item) => {
-    const content = sec(doc, '');
+    const content = sec(doc, `flex:1;min-width:0;font-size:${px(14, scale)};color:#555;line-height:1.9;`);
     appendListContent(doc, item, content);
-    const marker = sec(doc, `width:36px;background:${GREEN};display:flex;align-items:center;justify-content:center;`,
-      sp(doc, `width:8px;height:8px;background:#fff;`, leaf(doc)));
-    return featureCard(doc, scale, marker, content);
+    return sec(doc, 'display:flex;align-items:flex-start;gap:10px;margin:0 20px 10px;',
+      sp(doc, `display:block;width:7px;height:7px;flex:0 0 7px;margin-top:10px;background:${GREEN};border-radius:50%;`, leaf(doc)),
+      content);
   });
 }
 
 function orderedList(ol, { scale, doc }) {
   return Array.from(ol.children).filter((child) => child.tagName === 'LI').map((item, index) => {
-    const content = sec(doc, '');
+    const content = sec(doc, `flex:1;min-width:0;font-size:${px(14, scale)};color:#555;line-height:1.9;`);
     appendListContent(doc, item, content);
-    const marker = sec(doc, `width:36px;background:${GREEN};display:flex;align-items:center;justify-content:center;color:#fff;font-size:${px(12, scale)};font-weight:800;`,
-      doc.createTextNode(String(index + 1)));
-    return featureCard(doc, scale, marker, content);
+    return sec(doc, 'display:flex;align-items:flex-start;gap:10px;margin:0 20px 10px;',
+      sp(doc, `min-width:14px;flex-shrink:0;color:${GREEN};font-size:${px(13, scale)};font-weight:700;line-height:2;`, doc.createTextNode(`${index + 1}.`)),
+      content);
   });
 }
 

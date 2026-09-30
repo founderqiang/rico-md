@@ -138,11 +138,14 @@ function featureCard(doc, scale, markerColumn, content) {
 
 function appendListContent(doc, item, content) {
   const { label, description, descriptionNodes } = splitListItem(item);
-  if (label) content.appendChild(sp(doc, `font-weight:600;color:#252525;`, doc.createTextNode(label)));
-  if (descriptionNodes) {
+  if (label && !description && !descriptionNodes) {
+    moveChildren(item, content);
+  } else if (label && descriptionNodes) {
+    content.appendChild(sp(doc, `font-weight:600;color:#252525;`, doc.createTextNode(label)));
     content.appendChild(doc.createTextNode('：'));
     descriptionNodes.forEach((node) => content.appendChild(node));
-  } else if (description) {
+  } else if (label && description) {
+    content.appendChild(sp(doc, `font-weight:600;color:#252525;`, doc.createTextNode(label)));
     content.appendChild(doc.createTextNode(`：${description}`));
   } else {
     moveChildren(item, content);
@@ -153,8 +156,8 @@ function unorderedList(ul, { scale, doc }) {
   return Array.from(ul.children).filter((child) => child.tagName === 'LI').map((item) => {
     const content = sec(doc, '');
     appendListContent(doc, item, content);
-    const marker = sec(doc, `width:36px;background:linear-gradient(180deg,${VIOLET},#746AF0);display:flex;align-items:center;justify-content:center;`,
-      sp(doc, `width:8px;height:8px;background:#fff;border-radius:50%;`, leaf(doc)));
+    const marker = sec(doc, 'width:28px;flex-shrink:0;background:linear-gradient(180deg,#EAE7FF,#F8F7FF);display:flex;align-items:center;justify-content:center;',
+      sp(doc, `width:7px;height:7px;background:${VIOLET};border-radius:50%;`, leaf(doc)));
     return featureCard(doc, scale, marker, content);
   });
 }
@@ -163,7 +166,7 @@ function orderedList(ol, { scale, doc }) {
   return Array.from(ol.children).filter((child) => child.tagName === 'LI').map((item, index) => {
     const content = sec(doc, '');
     appendListContent(doc, item, content);
-    const marker = sec(doc, `width:36px;background:linear-gradient(180deg,${VIOLET},#746AF0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:${px(12, scale)};font-weight:800;`,
+    const marker = sec(doc, `width:28px;flex-shrink:0;background:linear-gradient(180deg,#EAE7FF,#F8F7FF);display:flex;align-items:center;justify-content:center;color:${VIOLET};font-size:${px(12, scale)};font-weight:800;`,
       doc.createTextNode(String(index + 1)));
     return featureCard(doc, scale, marker, content);
   });

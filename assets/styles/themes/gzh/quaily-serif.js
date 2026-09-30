@@ -7,7 +7,7 @@
  */
 import { applyComponentFlow } from './engine.js';
 import {
-  sec, p, sp, leaf, px, splitListItem, moveChildren, buildCtaCard, SANS, MONO
+  sec, p, sp, leaf, px, splitListItem, moveChildren, moveListItemInline, buildCtaCard, SANS, MONO
 } from './shared.js';
 
 const RED = '#AE1300';
@@ -109,22 +109,20 @@ function blockQuote(quote, { scale }) {
 function unorderedList(ul, { scale }) {
   const doc = ul.ownerDocument;
   return Array.from(ul.children).filter((child) => child.tagName === 'LI').map((item) => {
-    const { label, description, descriptionNodes } = splitListItem(item);
+    const { label, description, descriptionNodes } = splitListItem(item, { shortAsLabel: false });
     const row = sec(doc, 'display:flex;align-items:flex-start;gap:10px;margin:0 8px 12px;');
     const dash = sp(doc, `width:14px;height:2px;background:${RED};flex-shrink:0;margin-top:10px;`, leaf(doc));
     const desc = p(doc, `flex:1;font-size:${px(14, scale)};color:#3F3F51;margin:0;line-height:1.8;text-align:justify;`);
-    if (label) {
+    if (!label) {
+      moveListItemInline(item, desc);
+    } else {
       desc.appendChild(pill(doc, scale, label));
       desc.appendChild(doc.createTextNode(' '));
-    }
-    if (descriptionNodes) {
-      descriptionNodes.forEach((node) => desc.appendChild(node));
-    } else if (description) {
-      desc.appendChild(doc.createTextNode(description));
-    } else if (!label) {
-      moveChildren(item, desc);
-    } else {
-      return row;
+      if (descriptionNodes) {
+        descriptionNodes.forEach((node) => desc.appendChild(node));
+      } else {
+        desc.appendChild(doc.createTextNode(description));
+      }
     }
     row.appendChild(dash);
     row.appendChild(desc);
