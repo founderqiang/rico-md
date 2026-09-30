@@ -100,7 +100,7 @@
   --side-panel-width: 380px;
 
   /* ── Fonts ── */
-  --font-sans: 'PingFang SC','MiSans',"Noto Sans SC",-apple-system, "Noto Sans SC", BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: -apple-system, "Noto Sans SC", BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "SF Mono", "Menlo", "Monaco", "Cascadia Code", "Consolas", monospace;
 
   /* ── Preview ── */
